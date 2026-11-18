@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pacotes – GuiaJa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="topo"></div>
+<main class="miolo">
+  <h1>Pacotes disponíveis</h1><br>
+  <div class="filtros">
+    <div><label for="destino">Destino</label><select id="destino"><option value="">Todos</option></select></div>
+    <div><label for="orcamento">Orçamento até</label>
+      <select id="orcamento"><option value="0">Qualquer valor</option><option value="2000">R$ 2.000</option><option value="2500">R$ 2.500</option><option value="3000">R$ 3.000</option></select></div>
+    <button class="btn" id="buscar">Buscar viagem</button>
+  </div>
+  <div class="grade" id="lista"></div>
+  <p id="vazio" class="msg erro">Nenhum pacote encontrado. Tente outro destino ou orçamento.</p>
+</main>
+<div id="rodape"></div>
+<script src="app.js"></script>
+<script>
+  layout();
+  let PACOTES = [];
+  function mostrar() {
+    const d = $('#destino').value, max = +$('#orcamento').value;
+    const achados = PACOTES.filter(p => (!d || p.id == d) && (!max || p.preco <= max));
+    $('#lista').innerHTML = achados.map(cardPacote).join('');
+    $('#vazio').style.display = achados.length ? 'none' : 'block';
+  }
+  api('/api/pacotes').then(ps => {
+    PACOTES = ps;
+    ps.forEach(p => $('#destino').insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.nome}</option>`));
+    mostrar();
+  }).catch(e => { $('#vazio').textContent = e.message; $('#vazio').style.display = 'block'; });
+  $('#buscar').onclick = mostrar;
+</script>
+</body></html>

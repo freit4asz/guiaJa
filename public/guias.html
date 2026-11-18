@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guias locais – GuiaJa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="topo"></div>
+<main class="miolo">
+  <h1>Escolha seu guia</h1><br>
+  <div class="filtros">
+    <div><label for="idioma">Idioma</label><select id="idioma"><option value="">Todos</option><option>Português</option><option>Inglês</option><option>Italiano</option><option>Francês</option></select></div>
+    <div><label for="preco">Preço máximo por hora</label><select id="preco"><option value="0">Qualquer</option><option value="70">R$ 70</option><option value="100">R$ 100</option><option value="200">R$ 200</option></select></div>
+  </div>
+  <div class="lista" id="lista"></div>
+  <p class="msg" id="msg" role="status"></p>
+</main>
+<div id="rodape"></div>
+<script src="app.js"></script>
+<script>
+  layout();
+  let GUIAS = [];
+  function mostrar() {
+    const i = $('#idioma').value, max = +$('#preco').value;
+    const achados = GUIAS.filter(g => (!i || g.idiomas.includes(i)) && (!max || g.valorHora <= max));
+    $('#lista').innerHTML = achados.map(g => `<div class="item guia-item">
+      <div class="guia-identidade"><img class="guia-avatar" src="${fotoGuia(g)}" alt="Foto de ${g.nome}"><div><h3>${g.nome}</h3>
+        <span class="estrela">${estrelas(g.nota)}</span> ${g.nota} (${g.avaliacoes} avaliações)<br>
+        <small>${g.idiomas.join(', ')} · ${g.exp} anos de experiência · ${g.tag || ''}</small></div></div>
+      <div><strong>${moeda(g.valorHora)}/h</strong><br><button class="btn" data-id="${g.id}">Enviar mensagem</button></div></div>`).join('')
+      || '<p class="msg erro" style="display:block">Nenhum guia com esses filtros.</p>';
+  }
+  api('/api/guias').then(g => { GUIAS = g; mostrar(); }).catch(e => mensagem(e.message));
+  $('#idioma').onchange = $('#preco').onchange = mostrar;
+
+  let guiaSelecionado = null;
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="chat-modal" id="chat-modal" role="dialog" aria-modal="true" aria-labelledby="chat-titulo">
+      <section class="chat-painel">
+        <header class="chat-cabecalho">
+          <div class="chat-guia-identidade"><img id="chat-avatar" class="chat-avatar" src="" alt=""><div><small>Conversando com</small><h2 id="chat-titulo">Guia</h2></div></div>
+          <button type="button" id="chat-fechar" aria-label="Fechar chat">×</button>
+        </header>
+        <div class="chat-conversas" id="chat-conversas">
+          <p class="chat-aviso">Envie uma mensagem para combinar detalhes da viagem.</p>
+        </div>
+        <form class="chat-form" id="chat-form">
+          <textarea id="chat-texto" rows="3" maxlength="1000" placeholder="Digite sua mensagem..." required></textarea>
+          <button class="btn" type="submit" id="chat-enviar">Enviar mensagem</button>
+          <p class="msg" id="chat-msg" role="status"></p>
+        </form>
+      </section>
+    </div>`);
+
+  function abrirChat(g) {
+    guiaSelecionado = g;
+    $('#chat-titulo').textContent = g.nome;
+    $('#chat-avatar').src = fotoGuia(g);
+    $('#chat-avatar').alt = `Foto de ${g.nome}`;
+    $('#chat-texto').value = '';
+    $('#chat-msg').className = 'msg';
+    $('#chat-msg').textContent = '';
+    $('#chat-conversas').innerHTML = '<p class="chat-aviso">Envie uma mensagem para combinar detalhes da viagem.</p>';
+    $('#chat-modal').classList.add('aberto');
+    setTimeout(() => $('#chat-texto').focus(), 100);
+  }
+
+  function fecharChat() {
+    $('#chat-modal').classList.remove('aberto');
+  }
+
+  $('#chat-fechar').onclick = fecharChat;
+  $('#chat-modal').onclick = e => { if (e.target.id === 'chat-modal') fecharChat(); };
+  document.onkeydown = e => { if (e.key === 'Escape') fecharChat(); };
+
+  $('#lista').onclick = e => {
+    const id = e.target.dataset.id; if (!id) return;
+    const u = usuario();
+    if (!u) { location.href = 'login.html'; return; }
+    abrirChat(GUIAS.find(g => g.id == id));
+  };
+
+  $('#chat-form').onsubmit = async e => {
+    e.preventDefault();
+    const u = usuario();
+    const texto = $('#chat-texto').value.trim();
+    if (!u) { fecharChat(); location.href = 'login.html'; return; }
+    if (!texto || !guiaSelecionado) return;
+
+    const botao = $('#chat-enviar');
+    botao.disabled = true;
+    try {
+      await api('/api/mensagens', {idUsuario: u.id, idGuia: guiaSelecionado.id, conteudo: texto});
+      $('#chat-conversas').insertAdjacentHTML('beforeend', `<div class="chat-balao usuario"><strong>Você</strong><p>${texto.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}</p></div>`);
+      $('#chat-texto').value = '';
+      $('#chat-msg').textContent = 'Mensagem enviada!';
+      $('#chat-msg').className = 'msg ok';
+      $('#chat-conversas').scrollTop = $('#chat-conversas').scrollHeight;
+    } catch (err) {
+      $('#chat-msg').textContent = err.message;
+      $('#chat-msg').className = 'msg erro';
+    } finally {
+      botao.disabled = false;
+    }
+  };
+</script>
+</body></html>

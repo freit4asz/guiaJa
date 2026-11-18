@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hospedagem – GuiaJa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="topo"></div>
+<main class="miolo">
+  <h1>Encontre as melhores opções de hospedagem</h1><br>
+  <div class="grade" id="lista"></div>
+</main>
+<div id="rodape"></div>
+<script src="app.js"></script>
+<script>
+  layout();
+  api('/api/hoteis').then(hs => $('#lista').innerHTML = hs.map(h => `<article class="card hotel-card">
+    <div class="foto hotel-foto" style="background-image:url('${fotoHospedagem(h)}')"><span class="foto-destino">Hospedagem recomendada</span></div>
+    <div class="corpo"><h3>${h.nome}</h3><p>📍 ${h.local}</p>
+    <p><span class="estrela">${estrelas(h.nota)}</span> ${h.nota} (${h.aval} avaliações)</p>
+    <p><strong>${moeda(h.diaria)}</strong>/noite</p>
+    <button class="btn hotel-comprar" data-id="${h.id}" data-nome="${h.nome}" data-diaria="${h.diaria}" data-foto="${fotoHospedagem(h)}">Comprar hospedagem</button></div></article>`).join(''))
+    .catch(e => $('#lista').textContent = e.message);
+  document.body.insertAdjacentHTML('beforeend', `<div class="hotel-modal" id="hotel-modal"><section class="hotel-painel"><div class="carrinho-cabecalho"><h2 id="hotel-titulo">Reservar hospedagem</h2><button id="fechar-hotel">×</button></div><div class="campo"><label for="checkin">Check-in</label><input type="date" id="checkin"></div><div class="campo"><label for="noites">Quantidade de noites</label><input type="number" id="noites" min="1" max="30" value="1"></div><div class="total" id="hotel-total"></div><button class="btn" id="adicionar-hotel">Adicionar ao carrinho</button><p class="msg" id="hotel-msg"></p></section></div>`);
+  let hotelSelecionado = null;
+  $('#checkin').min = new Date().toISOString().slice(0,10);
+  function fecharHotel(){ $('#hotel-modal').classList.remove('aberto'); }
+  $('#fechar-hotel').onclick = fecharHotel;
+  $('#hotel-modal').onclick = e => { if(e.target.id === 'hotel-modal') fecharHotel(); };
+  function atualizarHotel(){ if(hotelSelecionado) $('#hotel-total').textContent = 'Total: '+moeda(hotelSelecionado.diaria * (+$('#noites').value || 1)); }
+  $('#noites').oninput = atualizarHotel;
+  $('#lista').onclick = e => { const b=e.target.closest('.hotel-comprar'); if(!b)return; hotelSelecionado={tipo:'hotel',idHospedagem:+b.dataset.id,nome:b.dataset.nome,diaria:+b.dataset.diaria,foto:b.dataset.foto,noites:1,checkin:''}; $('#hotel-titulo').textContent=b.dataset.nome; $('#noites').value=1; atualizarHotel(); $('#hotel-modal').classList.add('aberto'); };
+  $('#adicionar-hotel').onclick = () => { const checkin=$('#checkin').value; if(!checkin){ $('#hotel-msg').textContent='Escolha a data de check-in.'; $('#hotel-msg').className='msg erro'; return; } if(checkin < new Date().toISOString().slice(0,10)){ $('#hotel-msg').textContent='Escolha uma data válida.'; $('#hotel-msg').className='msg erro'; return; } hotelSelecionado.checkin=checkin; hotelSelecionado.noites=+$('#noites').value; hotelSelecionado.total=hotelSelecionado.diaria*hotelSelecionado.noites; fecharHotel(); adicionarAoCarrinho(hotelSelecionado); };
+</script>
+</body></html>

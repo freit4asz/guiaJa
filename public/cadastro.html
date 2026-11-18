@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cadastro – GuiaJa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="topo"></div>
+<main>
+  <div class="form">
+    <h1>Crie sua conta</h1>
+    <div class="campo"><label for="nome">Nome completo</label><input id="nome" autocomplete="name"></div>
+    <div class="campo"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email"></div>
+    <div class="campo"><label for="telefone">Telefone</label><input id="telefone" type="tel" autocomplete="tel"></div>
+    <div class="campo"><label for="senha">Senha (mínimo 8 caracteres)</label><input id="senha" type="password" autocomplete="new-password"></div>
+    <div class="campo"><label for="confirmar">Confirmar senha</label><input id="confirmar" type="password" autocomplete="new-password"></div>
+    <button class="btn" id="criar">Criar conta</button>
+    <p class="msg" id="msg" role="alert"></p>
+    <p style="margin-top:14px">Já tem uma conta? <a href="login.html">Entrar</a></p>
+  </div>
+</main>
+<div id="rodape"></div>
+<script src="app.js"></script>
+<script>
+  layout();
+  $('#criar').onclick = async () => {
+    const nome = $('#nome').value.trim(), email = $('#email').value.trim(),
+          telefone = $('#telefone').value.trim(), senha = $('#senha').value;
+    if (!nome || !email || !telefone || !senha) return mensagem('Preencha todos os campos.');
+    if (!emailValido(email)) return mensagem('Digite um e-mail válido.');
+    if (senha.length < 8) return mensagem('A senha precisa ter pelo menos 8 caracteres.');
+    if (senha !== $('#confirmar').value) return mensagem('As senhas não são iguais.');
+    try {
+      await api('/api/cadastro', {nome, email, telefone, senha});
+      mensagem('Conta criada! Redirecionando para o login…', 'ok');
+      setTimeout(() => location.href = 'login.html', 1200);
+    } catch (e) { mensagem(e.message); }
+  };
+</script>
+</body></html>

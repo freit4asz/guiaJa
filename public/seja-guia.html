@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seja um guia local – GuiaJa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="topo"></div>
+<main>
+  <div class="form">
+    <h1>Ganhe dinheiro mostrando sua cidade para turistas</h1>
+    <div class="campo"><label for="nome">Nome completo</label><input id="nome"></div>
+    <div class="campo"><label for="email">E-mail</label><input id="email" type="email"></div>
+    <div class="campo"><label for="curriculo">Currículo</label><textarea id="curriculo" rows="4"></textarea></div>
+    <button class="btn" id="enviar">Enviar</button>
+    <p class="msg" id="msg" role="status"></p>
+  </div>
+</main>
+<div id="rodape"></div>
+<script src="app.js"></script>
+<script>
+  layout();
+  $('#enviar').onclick = async () => {
+    const nome = $('#nome').value.trim(), email = $('#email').value.trim(), curriculo = $('#curriculo').value.trim();
+    if (!nome || !curriculo) return mensagem('Preencha nome e currículo.');
+    if (!emailValido(email)) return mensagem('Digite um e-mail válido.');
+    try { await api('/api/guias/candidatura', {nome, email, curriculo}); mensagem('Cadastro enviado! Nossa equipe vai analisar seu perfil.', 'ok'); }
+    catch (e) { mensagem(e.message); }
+  };
+</script>
+</body></html>

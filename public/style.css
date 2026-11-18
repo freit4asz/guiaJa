@@ -1,0 +1,99 @@
+:root{--azul:#0b2a4a;--teal:#0d8aa6;--verde:#1f9d6b;--fundo:#f3f8fb;--texto:#1b2b3a;--borda:#d9e4ec}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--fundo);color:var(--texto);line-height:1.5}
+a{color:var(--teal)}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.topo{background:#fff;border-bottom:1px solid var(--borda);position:sticky;top:0;z-index:5}
+.barra{max-width:1000px;margin:auto;display:flex;align-items:center;gap:20px;padding:12px 20px;flex-wrap:wrap}
+.logo{font-weight:700;font-size:1.6rem;color:var(--azul);text-decoration:none}
+.logo span{color:var(--teal)}
+.barra nav{display:flex;gap:18px;flex:1;justify-content:center;flex-wrap:wrap}
+.barra nav a{color:var(--azul);text-decoration:none}
+.conta{display:flex;gap:12px;align-items:center}
+.conta a{text-decoration:none;color:var(--azul)}
+.btn{display:inline-block;background:var(--teal);color:#fff!important;border:0;border-radius:999px;padding:10px 24px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.btn.escuro{background:var(--azul)}
+.btn.claro{background:#fff;color:var(--azul)!important;border:1px solid var(--borda)}
+main{min-height:70vh}
+.miolo{max-width:1000px;margin:auto;padding:32px 20px}
+h1,h2{color:var(--azul);line-height:1.2}
+h2{margin-bottom:16px}
+.hero{min-height:440px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:80px 20px;background-image:linear-gradient(rgba(11,42,74,.18),rgba(11,42,74,.48)),url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2400&q=95');background-size:cover;background-position:center 54%;background-repeat:no-repeat;image-rendering:auto}
+.hero h1{color:#fff;font-size:clamp(2.2rem,6vw,4rem);margin-bottom:12px;text-shadow:0 3px 18px rgba(0,0,0,.55)}
+.hero p{margin-bottom:24px;font-size:1.1rem;text-shadow:0 2px 12px rgba(0,0,0,.65)}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
+.card{background:#fff;border:1px solid var(--borda);border-radius:14px;overflow:hidden;text-decoration:none;color:inherit;display:block}
+.card .foto{height:130px;display:flex;align-items:flex-end;justify-content:flex-start;padding:10px;background-size:cover;background-position:center;position:relative}
+.card .foto:after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(11,42,74,.72))}
+.card .corpo{padding:14px}
+.card h3{color:var(--azul);margin:4px 0}
+.card p{font-size:.85rem;color:#4a5b6b}
+.card small{display:block;margin-top:8px;color:#4a5b6b}
+.preco{background:var(--verde);color:#fff;border-radius:999px;padding:2px 12px;font-size:.85rem;font-weight:600}
+.beneficios{display:flex;gap:20px;flex-wrap:wrap;margin-top:32px;background:#fff;border:1px solid var(--borda);border-radius:14px;padding:18px}
+.beneficios div{flex:1;min-width:180px}
+.filtros{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;align-items:end}
+label{display:block;font-size:.85rem;font-weight:600;color:var(--azul);margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;padding:10px 14px;border:1px solid var(--borda);border-radius:10px;background:#fff}
+.filtros>div{min-width:160px}
+.form{max-width:420px;margin:32px auto;background:#fff;border:1px solid var(--borda);border-radius:16px;padding:28px}
+.form h1{font-size:1.6rem;margin-bottom:16px}
+.form .campo{margin-bottom:14px}
+.form .btn{width:100%;margin-top:6px}
+.msg{margin-top:12px;padding:10px 14px;border-radius:10px;display:none}
+.msg.ok{display:block;background:#e3f6ec;color:#14663f}
+.msg.erro{display:block;background:#fde8e8;color:#9b1c1c}
+.lista{display:grid;gap:14px}
+.item{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:16px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
+.item h3{color:var(--azul)}
+.estrela{color:#f5a623}
+.detalhe{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.caixa{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:18px}
+.caixa ul{padding-left:18px}
+.total{font-size:1.4rem;font-weight:700;color:var(--verde);margin:12px 0}
+.rodape{background:#e6ebef;text-align:center;padding:18px;font-size:.85rem;color:#4a5b6b}
+.carrinho-icone{position:relative;border:0;background:#eef6f8;color:var(--azul);border-radius:999px;padding:8px 10px;font:inherit;cursor:pointer}
+.carrinho-icone span{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--verde);color:#fff;font-size:.72rem;line-height:20px}
+.carrinho-modal{position:fixed;inset:0;background:rgba(11,42,74,.45);z-index:20;display:flex;justify-content:flex-end;opacity:0;visibility:hidden;transition:.2s}
+.carrinho-modal.aberto{opacity:1;visibility:visible}
+.carrinho-painel{width:min(430px,92vw);height:100%;background:#fff;padding:22px;overflow:auto;box-shadow:-12px 0 30px rgba(11,42,74,.16)}
+.carrinho-cabecalho{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.carrinho-cabecalho button{border:0;background:transparent;font-size:2rem;color:var(--azul);cursor:pointer}
+.carrinho-vazio{padding:24px 0;color:#4a5b6b}
+.carrinho-item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;background:var(--fundo);border:1px solid var(--borda);border-radius:12px;padding:12px;align-items:start}
+.carrinho-foto{width:64px;height:64px;border-radius:10px;background:#dceef3;background-size:cover;background-position:center}
+.carrinho-item h3{color:var(--azul);margin-bottom:4px}
+.carrinho-item p{font-size:.78rem;color:#4a5b6b}
+.carrinho-total{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--borda);margin:18px 0;padding-top:14px;font-size:1.1rem}
+.carrinho-total strong{color:var(--verde);font-size:1.35rem}
+.carrinho-remover{display:block;width:100%;margin-top:8px}
+#carrinho-resumo>.btn{width:100%}
+.chat-modal{position:fixed;inset:0;background:rgba(11,42,74,.45);z-index:30;display:flex;justify-content:flex-end;opacity:0;visibility:hidden;transition:.2s}
+.chat-modal.aberto{opacity:1;visibility:visible}
+.chat-painel{width:min(420px,94vw);height:100%;background:#fff;display:flex;flex-direction:column;box-shadow:-12px 0 30px rgba(11,42,74,.18)}
+.chat-cabecalho{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--borda)}
+.chat-cabecalho small{color:#4a5b6b}
+.chat-cabecalho h2{margin:0;font-size:1.25rem}
+.chat-cabecalho button{border:0;background:transparent;color:var(--azul);font-size:2rem;cursor:pointer}
+.chat-conversas{flex:1;padding:18px;overflow-y:auto;background:var(--fundo)}
+.chat-aviso{max-width:280px;margin:20px auto;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid var(--borda);color:#4a5b6b;text-align:center;font-size:.85rem}
+.chat-balao{max-width:82%;margin:10px 0 10px auto;padding:10px 12px;border-radius:14px 14px 3px 14px;background:var(--teal);color:#fff}
+.chat-balao strong{display:block;font-size:.72rem;margin-bottom:3px}
+.chat-balao p{white-space:pre-wrap;word-break:break-word}
+.chat-form{padding:14px;border-top:1px solid var(--borda);background:#fff}
+.chat-form textarea{resize:vertical;min-height:76px;margin-bottom:8px}
+.chat-form .btn{width:100%}
+.chat-form .btn:disabled{opacity:.65;cursor:wait}
+.hotel-foto{height:180px}
+.foto-destino{position:relative;z-index:1;color:#fff;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.75)}
+.guia-item{padding:14px 16px}
+.guia-identidade{display:flex;align-items:center;gap:14px}
+.guia-avatar{width:82px;height:82px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 4px 14px rgba(11,42,74,.16)}
+.chat-guia-identidade{display:flex;align-items:center;gap:10px}
+.chat-avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 3px 10px rgba(11,42,74,.14)}
+.hotel-comprar{width:100%;margin-top:10px}
+.hotel-modal{position:fixed;inset:0;background:rgba(11,42,74,.45);z-index:30;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.2s;padding:20px}
+.hotel-modal.aberto{opacity:1;visibility:visible}
+.hotel-painel{width:min(420px,100%);background:#fff;border-radius:16px;padding:20px;box-shadow:0 18px 40px rgba(11,42,74,.24)}
+.hotel-painel .campo{margin-bottom:12px}
+@media(max-width:700px){.detalhe{grid-template-columns:1fr}.chat-painel{width:100%;max-width:none}.chat-modal{align-items:flex-end}.chat-painel{height:92vh;border-radius:18px 18px 0 0}.guia-avatar{width:68px;height:68px}.guia-identidade{align-items:flex-start}}

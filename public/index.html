@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GuiaJa – Sua próxima aventura, agora.</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="topo"></div>
+<main>
+  <section class="hero">
+    <h1>Sua próxima aventura, agora.</h1>
+    <p>Pacotes, hotéis e guias locais em um só lugar.</p>
+    <a class="btn claro" href="pacotes.html">Quero viajar</a>
+  </section>
+  <section class="miolo">
+    <h2>Destinos populares</h2>
+    <div class="grade" id="populares"></div>
+    <div class="beneficios">
+      <div><strong>⚡ Rapidez</strong><br>Reservas em instantes</div>
+      <div><strong>🧭 Curadoria</strong><br>Destinos selecionados por especialistas</div>
+      <div><strong>💬 Suporte</strong><br>Guia digital 24h</div>
+    </div>
+  </section>
+</main>
+<div id="rodape"></div>
+<script src="app.js"></script>
+<script>
+  layout();
+  api('/api/pacotes').then(ps => $('#populares').innerHTML = ps.slice(0, 3).map(cardPacote).join(''))
+    .catch(e => $('#populares').innerHTML = '<p>Não foi possível carregar os pacotes. O servidor está rodando?</p>');
+</script>
+</body></html>

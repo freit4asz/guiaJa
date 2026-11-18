@@ -1,0 +1,16 @@
+GUIAJA - PROJETO COMPLETO (site + servidor + banco)
+
+PASSO 1 - Banco de dados (MySQL Workbench)
+  File > Open SQL Script > banco/guiaja_banco.sql > clique no raio.
+
+PASSO 2 - Senha do MySQL
+  Abra server.js e troque SUA_SENHA_DO_MYSQL pela senha do seu MySQL.
+
+PASSO 3 - Terminal do VS Code (Terminal > New Terminal), dentro desta pasta:
+  node -v          (confere se o Node.js está instalado)
+  npm install      (instala as dependências, só na primeira vez)
+  npm start        (liga o servidor)
+
+PASSO 4 - Abra no navegador:  http://localhost:3000
+  Login de teste: ana@email.com / Senha@123
+  (para parar o servidor: Ctrl + C no terminal)

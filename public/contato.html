@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contato – GuiaJa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="topo"></div>
+<main class="miolo">
+  <h1>Contato</h1><br>
+  <div class="detalhe">
+    <div class="caixa">
+      <h2>Envie uma mensagem</h2>
+      <div class="campo"><label for="nome">Nome completo</label><input id="nome"></div><br>
+      <div class="campo"><label for="email">E-mail</label><input id="email" type="email"></div><br>
+      <div class="campo"><label for="assunto">Assunto</label><textarea id="assunto" rows="3"></textarea></div><br>
+      <button class="btn" id="enviar">Enviar</button>
+      <p class="msg" id="msg" role="status"></p>
+    </div>
+    <div>
+      <div class="caixa"><h2>Atendimento</h2><p>guiaja@gmail.com<br>+55 12 99999-9999</p></div><br>
+      <div class="caixa"><h2>Seja um guia local</h2><p>Venha fazer parte do nosso time.</p><br><a class="btn" href="seja-guia.html">Quero ser guia</a></div>
+    </div>
+  </div>
+</main>
+<div id="rodape"></div>
+<script src="app.js"></script>
+<script>
+  layout();
+  $('#enviar').onclick = async () => {
+    const nome = $('#nome').value.trim(), email = $('#email').value.trim(), assunto = $('#assunto').value.trim();
+    if (!nome || !assunto) return mensagem('Preencha nome e assunto.');
+    if (!emailValido(email)) return mensagem('Digite um e-mail válido.');
+    try { await api('/api/contato', {nome, email, assunto}); mensagem('Mensagem enviada! Responderemos em breve.', 'ok'); }
+    catch (e) { mensagem(e.message); }
+  };
+</script>
+</body></html>
