@@ -35,38 +35,6 @@ const pool = process.env.MYSQL_URL
       decimalNumbers: true
     });
 
-const pacotesDemo = [
-  {id: 1, nome: 'Bonito, MS', tipo: 'Ecoturismo', desc: 'Águas cristalinas, grutas e flutuação em rios.', dias: 3, preco: 1990, emoji: '🌿', cor: '#bfe8df'},
-  {id: 2, nome: 'Bariloche, ARG', tipo: 'Neve e montanhas', desc: 'Lagos cristalinos e montanhas nevadas na Patagônia.', dias: 5, preco: 2999, emoji: '🏔️', cor: '#cfe3f7'},
-  {id: 3, nome: 'Lisboa, POR', tipo: 'Cultura', desc: 'Capital histórica com ladeiras, bondes e a Torre de Belém.', dias: 4, preco: 2100, emoji: '🏰', cor: '#f9dfc4'},
-  {id: 4, nome: 'Lençóis Maranhenses, MA', tipo: 'Natureza', desc: 'Dunas brancas com lagoas de água doce.', dias: 4, preco: 2450, emoji: '🏜️', cor: '#f6ecc8'},
-  {id: 5, nome: 'Rio de Janeiro, RJ', tipo: 'Praia e cidade', desc: 'Cristo Redentor, Pão de Açúcar e praias famosas.', dias: 3, preco: 1799.99, emoji: '🏖️', cor: '#fbd9d3'},
-  {id: 6, nome: 'Foz do Iguaçu, PR', tipo: 'Natureza', desc: 'As Cataratas do Iguaçu e o Parque das Aves.', dias: 3, preco: 1580, emoji: '💦', cor: '#d6efd0'}
-];
-
-const roteirosDemo = {
-  1: ['Chegada à cidade e check-in no hotel', 'Visita à Gruta do Lago Azul e almoço local', 'Flutuação no Rio Sucuri e encerramento'],
-  2: ['Chegada e passeio pelo centro', 'Circuito Chico', 'Cerro Catedral', 'Lago Nahuel Huapi', 'Retorno'],
-  3: ['Chegada e Alfama', 'Torre de Belém e Mosteiro', 'Sintra', 'Retorno'],
-  4: ['Chegada a Barreirinhas', 'Passeio pelas lagoas', 'Rio Preguiças', 'Retorno'],
-  5: ['Chegada e Copacabana', 'Cristo Redentor e Pão de Açúcar', 'Retorno'],
-  6: ['Chegada e check-in', 'Cataratas do lado brasileiro', 'Parque das Aves e retorno']
-};
-
-const guiasDemo = [
-  {id: 1, nome: 'João Silva', nota: 4.8, avaliacoes: 1220, valorHora: 120, exp: 10, tag: 'Mais escolhido', idiomas: ['Português', 'Inglês']},
-  {id: 2, nome: 'Marco Rossi', nota: 4.7, avaliacoes: 920, valorHora: 90, exp: 8, tag: 'Disponível agora', idiomas: ['Italiano', 'Português']},
-  {id: 3, nome: 'Sophia Miller', nota: 4.6, avaliacoes: 623, valorHora: 70, exp: 7, tag: 'Disponível agora', idiomas: ['Inglês']},
-  {id: 4, nome: 'Antoine Girard', nota: 4.5, avaliacoes: 526, valorHora: 66, exp: 5, tag: 'Disponível agora', idiomas: ['Francês']}
-];
-
-const hoteisDemo = [
-  {id: 1, nome: 'Hotel Monumental', local: 'Bombinhas, SC', nota: 5, aval: 1220, diaria: 220},
-  {id: 2, nome: 'Hotel Paraíso', local: 'Rio de Janeiro, RJ', nota: 4.6, aval: 950, diaria: 200},
-  {id: 3, nome: 'Hotel Beira Mar', local: 'Porto de Galinhas, PE', nota: 4.8, aval: 1100, diaria: 190},
-  {id: 4, nome: 'Hotel Horizonte', local: 'Florianópolis, SC', nota: 4.9, aval: 1210, diaria: 180}
-];
-
 const hash = s => crypto.createHash('sha256').update(s).digest('hex'); // igual ao SHA2(...,256) do banco
 const emailValido = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
 // Evita que um erro de banco derrube o servidor
@@ -80,53 +48,36 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/health', async (req, res) => {
-  if (!bancoConfigurado) return res.status(200).json({ok: true, modo: 'demonstracao'});
+  if (!bancoConfigurado) {
+    return res.status(503).json({ok: false, erro: 'Variaveis do banco nao configuradas'});
+  }
   try {
     await pool.query('SELECT 1');
-    res.status(200).json({ok: true, modo: 'banco'});
+    res.status(200).json({ok: true});
   } catch (e) {
     console.error('Erro no health check do banco:', e.code || 'SEM_CODIGO', e.message);
-    res.status(200).json({ok: true, modo: 'demonstracao'});
+    res.status(503).json({ok: false, erro: 'Banco indisponivel'});
   }
 });
 
 // ---------- Consultas ----------
 app.get('/api/pacotes', rota(async (req, res) => {
-  if (!bancoConfigurado) return res.json(pacotesDemo);
-  try {
   const [rows] = await pool.query(
     `SELECT id_pacote AS id, nome, tipo, descricao AS \`desc\`, duracao_dias AS dias, preco, emoji, cor_fundo AS cor
      FROM pacote WHERE ativo = TRUE ORDER BY id_pacote`);
   res.json(rows);
-  } catch (e) {
-    console.error('Banco indisponível; usando dados de demonstração:', e.code || 'SEM_CODIGO');
-    res.json(pacotesDemo);
-  }
 }));
 
 app.get('/api/pacotes/:id', rota(async (req, res) => {
-  if (!bancoConfigurado) {
-    const p = pacotesDemo.find(x => String(x.id) === String(req.params.id));
-    if (!p) return res.status(404).json({erro: 'Pacote não encontrado'});
-    return res.json({...p, roteiro: roteirosDemo[p.id] || []});
-  }
-  try {
   const [[p]] = await pool.query(
     `SELECT id_pacote AS id, nome, tipo, duracao_dias AS dias, preco FROM pacote WHERE id_pacote = ? AND ativo = TRUE`, [req.params.id]);
   if (!p) return res.status(404).json({erro: 'Pacote não encontrado'});
   const [r] = await pool.query(`SELECT descricao FROM roteiro_pacote WHERE id_pacote = ? ORDER BY dia`, [p.id]);
   p.roteiro = r.map(x => x.descricao);
   res.json(p);
-  } catch (e) {
-    const p = pacotesDemo.find(x => String(x.id) === String(req.params.id));
-    if (!p) return res.status(404).json({erro: 'Pacote não encontrado'});
-    res.json({...p, roteiro: roteirosDemo[p.id] || []});
-  }
 }));
 
 app.get('/api/guias', rota(async (req, res) => {
-  if (!bancoConfigurado) return res.json(guiasDemo);
-  try {
   const [rows] = await pool.query(
     `SELECT g.id_guia AS id, g.nome, g.avaliacao AS nota, g.qtd_avaliacoes AS avaliacoes,
             g.valor_hora AS valorHora, g.anos_experiencia AS exp, g.tag_status AS tag,
@@ -134,22 +85,14 @@ app.get('/api/guias', rota(async (req, res) => {
      FROM guia g JOIN guia_idioma gi ON gi.id_guia = g.id_guia JOIN idioma i ON i.id_idioma = gi.id_idioma
      WHERE g.status_aprovacao = 'aprovado' GROUP BY g.id_guia ORDER BY g.id_guia`);
   res.json(rows.map(g => ({...g, idiomas: g.idiomas.split(',')})));
-  } catch (e) {
-    res.json(guiasDemo);
-  }
 }));
 
 app.get('/api/hoteis', rota(async (req, res) => {
-  if (!bancoConfigurado) return res.json(hoteisDemo);
-  try {
   const [rows] = await pool.query(
     `SELECT h.id_hospedagem AS id, h.nome, CONCAT(d.cidade, ', ', d.estado) AS \`local\`,
             h.avaliacao AS nota, h.qtd_avaliacoes AS aval, h.preco_diaria AS diaria
      FROM hospedagem h JOIN destino d ON d.id_destino = h.id_destino ORDER BY h.id_hospedagem`);
   res.json(rows);
-  } catch (e) {
-    res.json(hoteisDemo);
-  }
 }));
 
 // ---------- Cadastro e login ----------
@@ -158,7 +101,6 @@ app.post('/api/cadastro', rota(async (req, res) => {
   if (!nome || !email || !telefone || !senha) return res.status(400).json({erro: 'Preencha todos os campos.'});
   if (!emailValido(email)) return res.status(400).json({erro: 'Digite um e-mail válido.'});
   if (senha.length < 8) return res.status(400).json({erro: 'A senha precisa ter pelo menos 8 caracteres.'});
-  if (!bancoConfigurado) return res.json({ok: true, modo: 'demonstracao'});
   try {
     await pool.query(`INSERT INTO usuario (nome, email, telefone, senha, data_cadastro) VALUES (?,?,?,?,CURDATE())`,
       [nome, email.toLowerCase(), telefone, hash(senha)]);
@@ -171,23 +113,12 @@ app.post('/api/cadastro', rota(async (req, res) => {
 
 app.post('/api/login', rota(async (req, res) => {
   const {email, senha} = req.body;
-  if (!bancoConfigurado) {
-    if ((email || '').toLowerCase() === 'ana@email.com' && senha === 'Senha@123')
-      return res.json({id: 2, nome: 'Ana Souza', email: 'ana@email.com', modo: 'demonstracao'});
-    return res.status(401).json({erro: 'E-mail ou senha incorretos.'});
-  }
-  try {
   const [[u]] = await pool.query(
     `SELECT id_usuario AS id, nome, email, bloqueado FROM usuario WHERE email = ? AND senha = ?`,
     [(email || '').toLowerCase(), hash(senha || '')]);
   if (!u) return res.status(401).json({erro: 'E-mail ou senha incorretos.'});
   if (u.bloqueado) return res.status(403).json({erro: 'Conta bloqueada. Fale com o suporte.'});
   res.json({id: u.id, nome: u.nome, email: u.email});
-  } catch (e) {
-    if ((email || '').toLowerCase() === 'ana@email.com' && senha === 'Senha@123')
-      return res.json({id: 2, nome: 'Ana Souza', email: 'ana@email.com', modo: 'demonstracao'});
-    throw e;
-  }
 }));
 
 // ---------- Reserva (o total é calculado aqui, no servidor) ----------
@@ -196,21 +127,6 @@ app.post('/api/reservas', rota(async (req, res) => {
   if (!idUsuario) return res.status(401).json({erro: 'Faça login para reservar.'});
   if (!dataIda || dataIda < new Date().toISOString().slice(0, 10))
     return res.status(400).json({erro: 'Escolha uma data que não seja no passado.'});
-  if (!bancoConfigurado) {
-    const codigo = 'GJ-' + crypto.randomBytes(3).toString('hex').toUpperCase();
-    let total = 0;
-    if (tipo === 'hotel') {
-      const hotel = hoteisDemo.find(x => String(x.id) === String(idHospedagem));
-      total = (hotel ? hotel.diaria : 200) * Math.max(1, Math.min(30, Number(noites) || 1));
-    } else {
-      const pacote = pacotesDemo.find(x => String(x.id) === String(idPacote));
-      const guia = guiasDemo.find(x => String(x.id) === String(idGuia));
-      const hotel = hoteisDemo.find(x => String(x.id) === String(idHospedagem));
-      if (!pacote || !guia) return res.status(400).json({erro: 'Pacote ou guia inválidos.'});
-      total = pacote.preco + (hotel ? hotel.diaria * pacote.dias : 0) + guia.valorHora * 4 * pacote.dias;
-    }
-    return res.json({codigo, total, modo: 'demonstracao'});
-  }
 
   if (tipo === 'hotel') {
     const [[h]] = await pool.query(`SELECT preco_diaria FROM hospedagem WHERE id_hospedagem = ?`, [idHospedagem]);
@@ -248,7 +164,6 @@ app.post('/api/reservas', rota(async (req, res) => {
 app.post('/api/contato', rota(async (req, res) => {
   const {nome, email, assunto} = req.body;
   if (!nome || !assunto || !emailValido(email)) return res.status(400).json({erro: 'Preencha os campos corretamente.'});
-  if (!bancoConfigurado) return res.json({ok: true, modo: 'demonstracao'});
   await pool.query(`INSERT INTO contato (nome, email, assunto, data_envio) VALUES (?,?,?,NOW())`, [nome, email, assunto]);
   res.json({ok: true});
 }));
@@ -256,7 +171,6 @@ app.post('/api/contato', rota(async (req, res) => {
 app.post('/api/guias/candidatura', rota(async (req, res) => {
   const {nome, email, curriculo} = req.body;
   if (!nome || !curriculo || !emailValido(email)) return res.status(400).json({erro: 'Preencha os campos corretamente.'});
-  if (!bancoConfigurado) return res.json({ok: true, modo: 'demonstracao'});
   await pool.query(`INSERT INTO guia (nome, email, curriculo, status_aprovacao) VALUES (?,?,?,'pendente')`, [nome, email, curriculo]);
   res.json({ok: true});
 }));
@@ -264,15 +178,12 @@ app.post('/api/guias/candidatura', rota(async (req, res) => {
 app.post('/api/mensagens', rota(async (req, res) => {
   const {idUsuario, idGuia, conteudo} = req.body;
   if (!idUsuario || !idGuia || !conteudo) return res.status(400).json({erro: 'Dados incompletos.'});
-  if (!bancoConfigurado) return res.json({ok: true, modo: 'demonstracao'});
   await pool.query(`INSERT INTO mensagem_guia (conteudo, data_envio, id_usuario, id_guia) VALUES (?,NOW(),?,?)`, [conteudo, idUsuario, idGuia]);
   res.json({ok: true});
 }));
 
-if (bancoConfigurado) {
-  pool.query('ALTER TABLE reserva MODIFY id_pacote INT NULL')
-    .catch(e => console.error('Não foi possível ajustar reserva.id_pacote:', e.code || 'SEM_CODIGO', e.message));
-}
+pool.query('ALTER TABLE reserva MODIFY id_pacote INT NULL')
+  .catch(e => console.error('Não foi possível ajustar reserva.id_pacote:', e.message));
 
 const port = Number(process.env.PORT || 3000);
 app.listen(port, '0.0.0.0', () => console.log(`GuiaJa rodando na porta ${port}`));
