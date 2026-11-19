@@ -14,21 +14,3 @@ PASSO 3 - Terminal do VS Code (Terminal > New Terminal), dentro desta pasta:
 PASSO 4 - Abra no navegador:  http://localhost:3000
   Login de teste: ana@email.com / Senha@123
   (para parar o servidor: Ctrl + C no terminal)
-
-PUBLICAÇÃO NO RENDER
-1. Crie um banco MySQL externo (por exemplo, Aiven ou PlanetScale).
-2. Importe o conteúdo de banco/guiaja_banco.sql no banco externo.
-   Ajuste o script para não executar DROP DATABASE nem CREATE DATABASE em um banco gerenciado.
-3. No GitHub, envie este projeto para o repositório.
-4. No Render, crie um novo Web Service conectado ao repositório.
-5. Use Runtime: Node, Build Command: npm install e Start Command: npm start.
-6. Cadastre estas Environment Variables no Render:
-   MYSQL_HOST = endereço do banco
-   MYSQL_PORT = porta do banco
-   MYSQL_DATABASE = nome do banco
-   MYSQL_USER = usuário do banco
-   MYSQL_PASSWORD = senha do banco
-   MYSQL_SSL = true (quando o provedor exigir)
-   Alternativamente, cadastre MYSQL_URL com a URL mysql:// fornecida pelo provedor.
-   Sem estas variáveis, o site usa dados de demonstração e contas criadas ficam
-   apenas na memória do servidor; elas são apagadas quando o serviço reinicia.
