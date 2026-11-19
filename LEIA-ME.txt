@@ -29,3 +29,4 @@ PUBLICAÇÃO NO RENDER
    MYSQL_USER = usuário do banco
    MYSQL_PASSWORD = senha do banco
    MYSQL_SSL = true (quando o provedor exigir)
+   Alternativamente, cadastre MYSQL_URL com a URL mysql:// fornecida pelo provedor.

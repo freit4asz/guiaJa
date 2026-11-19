@@ -18,21 +18,28 @@ if (fs.existsSync(envFile)) {
   });
 }
 
-const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST || 'localhost',
-  port: Number(process.env.MYSQL_PORT || 3306),
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || '',
-  database: process.env.MYSQL_DATABASE || 'guiaja',
-  ssl: process.env.MYSQL_SSL === 'true' ? {rejectUnauthorized: true} : undefined,
-  decimalNumbers: true
-});
+const bancoConfigurado = Boolean(
+  process.env.MYSQL_URL ||
+  (process.env.MYSQL_HOST && process.env.MYSQL_DATABASE && process.env.MYSQL_USER)
+);
+
+const pool = process.env.MYSQL_URL
+  ? mysql.createPool(process.env.MYSQL_URL)
+  : mysql.createPool({
+      host: process.env.MYSQL_HOST || 'localhost',
+      port: Number(process.env.MYSQL_PORT || 3306),
+      user: process.env.MYSQL_USER || 'root',
+      password: process.env.MYSQL_PASSWORD || '',
+      database: process.env.MYSQL_DATABASE || 'guiaja',
+      ssl: process.env.MYSQL_SSL === 'true' ? {rejectUnauthorized: true} : undefined,
+      decimalNumbers: true
+    });
 
 const hash = s => crypto.createHash('sha256').update(s).digest('hex'); // igual ao SHA2(...,256) do banco
 const emailValido = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
 // Evita que um erro de banco derrube o servidor
 const rota = fn => (req, res) => fn(req, res).catch(e => {
-  console.error(e.message);
+  console.error(`Erro na API ${req.method} ${req.originalUrl}:`, e.code || 'SEM_CODIGO', e.message);
   res.status(500).json({erro: 'Erro no servidor. Veja o terminal.'});
 });
 
@@ -40,7 +47,18 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/health', (req, res) => res.status(200).json({ok: true}));
+app.get('/health', async (req, res) => {
+  if (!bancoConfigurado) {
+    return res.status(503).json({ok: false, erro: 'Variaveis do banco nao configuradas'});
+  }
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).json({ok: true});
+  } catch (e) {
+    console.error('Erro no health check do banco:', e.code || 'SEM_CODIGO', e.message);
+    res.status(503).json({ok: false, erro: 'Banco indisponivel'});
+  }
+});
 
 // ---------- Consultas ----------
 app.get('/api/pacotes', rota(async (req, res) => {
