@@ -69,6 +69,10 @@ const hoteisDemo = [
 
 const hash = s => crypto.createHash('sha256').update(s).digest('hex'); // igual ao SHA2(...,256) do banco
 const emailValido = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
+const usuariosDemo = new Map([
+  ['ana@email.com', {id: 2, nome: 'Ana Souza', email: 'ana@email.com', senha: hash('Senha@123')}]
+]);
+let proximoIdUsuarioDemo = 3;
 // Evita que um erro de banco derrube o servidor
 const rota = fn => (req, res) => fn(req, res).catch(e => {
   console.error(`Erro na API ${req.method} ${req.originalUrl}:`, e.code || 'SEM_CODIGO', e.message);
@@ -158,7 +162,17 @@ app.post('/api/cadastro', rota(async (req, res) => {
   if (!nome || !email || !telefone || !senha) return res.status(400).json({erro: 'Preencha todos os campos.'});
   if (!emailValido(email)) return res.status(400).json({erro: 'Digite um e-mail válido.'});
   if (senha.length < 8) return res.status(400).json({erro: 'A senha precisa ter pelo menos 8 caracteres.'});
-  if (!bancoConfigurado) return res.json({ok: true, modo: 'demonstracao'});
+  if (!bancoConfigurado) {
+    const emailNormalizado = email.toLowerCase();
+    if (usuariosDemo.has(emailNormalizado)) return res.status(409).json({erro: 'Este e-mail já está cadastrado.'});
+    usuariosDemo.set(emailNormalizado, {
+      id: proximoIdUsuarioDemo++,
+      nome,
+      email: emailNormalizado,
+      senha: hash(senha)
+    });
+    return res.json({ok: true, modo: 'demonstracao'});
+  }
   try {
     await pool.query(`INSERT INTO usuario (nome, email, telefone, senha, data_cadastro) VALUES (?,?,?,?,CURDATE())`,
       [nome, email.toLowerCase(), telefone, hash(senha)]);
@@ -172,8 +186,9 @@ app.post('/api/cadastro', rota(async (req, res) => {
 app.post('/api/login', rota(async (req, res) => {
   const {email, senha} = req.body;
   if (!bancoConfigurado) {
-    if ((email || '').toLowerCase() === 'ana@email.com' && senha === 'Senha@123')
-      return res.json({id: 2, nome: 'Ana Souza', email: 'ana@email.com', modo: 'demonstracao'});
+    const usuario = usuariosDemo.get((email || '').toLowerCase());
+    if (usuario && usuario.senha === hash(senha || ''))
+      return res.json({id: usuario.id, nome: usuario.nome, email: usuario.email, modo: 'demonstracao'});
     return res.status(401).json({erro: 'E-mail ou senha incorretos.'});
   }
   try {
@@ -184,8 +199,6 @@ app.post('/api/login', rota(async (req, res) => {
   if (u.bloqueado) return res.status(403).json({erro: 'Conta bloqueada. Fale com o suporte.'});
   res.json({id: u.id, nome: u.nome, email: u.email});
   } catch (e) {
-    if ((email || '').toLowerCase() === 'ana@email.com' && senha === 'Senha@123')
-      return res.json({id: 2, nome: 'Ana Souza', email: 'ana@email.com', modo: 'demonstracao'});
     throw e;
   }
 }));

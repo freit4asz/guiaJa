@@ -30,3 +30,5 @@ PUBLICAÇÃO NO RENDER
    MYSQL_PASSWORD = senha do banco
    MYSQL_SSL = true (quando o provedor exigir)
    Alternativamente, cadastre MYSQL_URL com a URL mysql:// fornecida pelo provedor.
+   Sem estas variáveis, o site usa dados de demonstração e contas criadas ficam
+   apenas na memória do servidor; elas são apagadas quando o serviço reinicia.
