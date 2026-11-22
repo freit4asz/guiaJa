@@ -30,8 +30,15 @@ const hash = s => crypto.createHash('sha256').update(s).digest('hex'); // igual 
 const emailValido = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
 // Evita que um erro de banco derrube o servidor
 const rota = fn => (req, res) => fn(req, res).catch(e => {
-  console.error(e.message);
-  res.status(500).json({erro: 'Erro no servidor. Veja o terminal.'});
+  console.error(`Erro na API ${req.method} ${req.originalUrl}:`, e.code || 'SEM_CODIGO', e.message);
+  const mensagensBanco = {
+    ER_ACCESS_DENIED_ERROR: 'Acesso ao MySQL negado. Confira MYSQL_PASSWORD no arquivo .env e reinicie o servidor.',
+    ER_BAD_DB_ERROR: 'O banco guiaja não existe. Importe banco/guiaja_banco.sql no MySQL Workbench.',
+    ECONNREFUSED: 'Não foi possível conectar ao MySQL. Confira se o serviço MySQL80 está iniciado.'
+  };
+  res.status(500).json({
+    erro: mensagensBanco[e.code] || 'Não foi possível concluir a operação. Confira a conexão e o esquema do banco MySQL.'
+  });
 });
 
 const app = express();

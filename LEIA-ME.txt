@@ -4,7 +4,9 @@ PASSO 1 - Banco de dados (MySQL Workbench)
   File > Open SQL Script > banco/guiaja_banco.sql > clique no raio.
 
 PASSO 2 - Senha do MySQL
-  Abra server.js e troque SUA_SENHA_DO_MYSQL pela senha do seu MySQL.
+  Crie o arquivo .env na mesma pasta de server.js e coloque:
+  MYSQL_PASSWORD=sua_senha_do_mysql
+  Troque pelo valor da senha definida no MySQL Workbench. Não compartilhe o arquivo.
 
 PASSO 3 - Terminal do VS Code (Terminal > New Terminal), dentro desta pasta:
   node -v          (confere se o Node.js está instalado)
