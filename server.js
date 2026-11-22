@@ -19,10 +19,12 @@ if (fs.existsSync(envFile)) {
 }
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
+  host: process.env.MYSQL_HOST || 'localhost',
+  port: Number(process.env.MYSQL_PORT || 3306),
+  user: process.env.MYSQL_USER || 'root',
   password: process.env.MYSQL_PASSWORD || '',
-  database: 'guiaja',
+  database: process.env.MYSQL_DATABASE || 'guiaja',
+  ssl: process.env.MYSQL_SSL === 'true' ? {rejectUnauthorized: true} : undefined,
   decimalNumbers: true
 });
 
@@ -170,4 +172,9 @@ app.post('/api/mensagens', rota(async (req, res) => {
 pool.query('ALTER TABLE reserva MODIFY id_pacote INT NULL')
   .catch(e => console.error('Não foi possível ajustar reserva.id_pacote:', e.message));
 
-app.listen(3000, () => console.log('GuiaJa rodando em http://localhost:3000'));
+if (require.main === module) {
+  const porta = Number(process.env.PORT || 3000);
+  app.listen(porta, () => console.log(`GuiaJa rodando na porta ${porta}`));
+}
+
+module.exports = app;

@@ -4,9 +4,8 @@ PASSO 1 - Banco de dados (MySQL Workbench)
   File > Open SQL Script > banco/guiaja_banco.sql > clique no raio.
 
 PASSO 2 - Senha do MySQL
-  Crie o arquivo .env na mesma pasta de server.js e coloque:
-  MYSQL_PASSWORD=sua_senha_do_mysql
-  Troque pelo valor da senha definida no MySQL Workbench. Não compartilhe o arquivo.
+  Copie .env.example para .env e preencha MYSQL_PASSWORD com a senha do MySQL.
+  Não compartilhe nem publique o arquivo .env.
 
 PASSO 3 - Terminal do VS Code (Terminal > New Terminal), dentro desta pasta:
   node -v          (confere se o Node.js está instalado)
@@ -16,3 +15,13 @@ PASSO 3 - Terminal do VS Code (Terminal > New Terminal), dentro desta pasta:
 PASSO 4 - Abra no navegador:  http://localhost:3000
   Login de teste: ana@email.com / Senha@123
   (para parar o servidor: Ctrl + C no terminal)
+
+PUBLICAÇÃO NA VERCEL
+  1. Hospede o MySQL em um serviço externo que permita conexao remota.
+  2. Execute banco/guiaja_banco.sql nesse banco externo.
+  3. Na Vercel, em Settings > Environment Variables, configure:
+     MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD,
+     MYSQL_DATABASE e MYSQL_SSL.
+  4. Faça o deploy a partir da raiz do projeto. O vercel.json enviado
+     serve public/ como site e server.js como API em /api.
+  Observação: localhost no projeto local não existe no servidor da Vercel.
