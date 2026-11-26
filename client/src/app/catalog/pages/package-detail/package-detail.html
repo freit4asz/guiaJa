@@ -1,0 +1,76 @@
+<div *ngIf="loading" class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+<p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+
+<ng-container *ngIf="travelPackage as item">
+  <section class="detail-hero">
+    <img *ngIf="imageFor(item) as image" [src]="image" [alt]="item.nome" fetchpriority="high">
+    <div class="detail-hero-content">
+      <p class="eyebrow">{{ item.cidade }}<span *ngIf="item.estado">, {{ item.estado }}</span></p>
+      <h1>{{ item.nome }}</h1>
+      <p>{{ item.dias }} dias · {{ item.desc }}</p>
+    </div>
+  </section>
+
+  <div class="detail-layout">
+    <section>
+      <mat-card class="content-card">
+        <h2>Roteiro da viagem</h2>
+        <ol *ngIf="item.roteiro?.length; else noItinerary">
+          <li *ngFor="let stop of item.roteiro">{{ stop }}</li>
+        </ol>
+        <ng-template #noItinerary><p>O roteiro detalhado será confirmado após a reserva.</p></ng-template>
+      </mat-card>
+
+      <mat-card class="content-card">
+        <h2>Personalize seu pacote</h2>
+        <form (ngSubmit)="buy()">
+          <mat-form-field appearance="outline">
+            <mat-label>Data de ida</mat-label>
+            <input matInput type="date" name="dataIda" [min]="minDate" [(ngModel)]="dataIda" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Guia local (opcional)</mat-label>
+            <mat-select name="guia" [(ngModel)]="selectedGuideId">
+              <mat-option [value]="null">Sem guia</mat-option>
+              <mat-option *ngFor="let guide of guides" [value]="guide.id">
+                {{ guide.nome }} · {{ guide.local }} · {{ guide.valorHora | currency:'BRL' }}/hora
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <p class="hint">O roteiro personalizado só é incluído quando você escolhe um guia.</p>
+
+          <mat-checkbox name="includeHotel" [(ngModel)]="includeHotel" [disabled]="!hotels.length">
+            Incluir hospedagem compatível com {{ item.cidade }}
+          </mat-checkbox>
+          <mat-form-field appearance="outline" *ngIf="includeHotel && hotels.length">
+            <mat-label>Hospedagem</mat-label>
+            <mat-select name="hotel" [(ngModel)]="selectedHotelId">
+              <mat-option *ngFor="let hotel of hotels" [value]="hotel.id">
+                {{ hotel.nome }} · {{ hotel.diaria | currency:'BRL' }}/noite
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <p *ngIf="!hotels.length" class="hint">Não há hospedagens cadastradas nesta cidade; nenhuma hospedagem de outro destino será oferecida.</p>
+
+          <div class="purchase-total">
+            <span>Pacote com 5% de desconto já aplicado</span>
+            <strong>{{ total | currency:'BRL' }}</strong>
+          </div>
+          <button mat-flat-button color="primary" type="submit">Continuar para compra</button>
+        </form>
+      </mat-card>
+    </section>
+
+    <aside>
+      <mat-card class="price-card">
+        <p>Preço do pacote</p>
+        <p><s>{{ item.precoOriginal | currency:'BRL' }}</s></p>
+        <h2>{{ item.preco | currency:'BRL' }}</h2>
+        <p class="discount-copy">5% de desconto aplicado no checkout</p>
+        <hr>
+        <p>O valor final considera guia e hospedagem selecionados.</p>
+      </mat-card>
+    </aside>
+  </div>
+</ng-container>

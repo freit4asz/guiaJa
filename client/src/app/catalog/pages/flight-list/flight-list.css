@@ -1,0 +1,10 @@
+.page-heading { max-width: 760px; margin-bottom: 2rem; }
+.page-heading h1 { margin: 0.4rem 0; font-size: clamp(2rem, 5vw, 3rem); }
+.page-heading p:last-child { color: #64748b; }
+.eyebrow { color: #0f766e; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+.flight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1rem; }
+.flight-card { border-left: 4px solid #0f766e; }
+.route { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+.flight-price { font-size: 1.5rem; font-weight: 700; }
+.loading-state { display: grid; min-height: 200px; place-items: center; }
+.error-message { color: #b91c1c; }

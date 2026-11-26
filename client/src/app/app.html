@@ -1,0 +1,26 @@
+<mat-toolbar color="primary" class="site-toolbar">
+  <a class="brand" routerLink="/">Guia<span>Ja</span></a>
+  <nav class="main-nav" aria-label="Navegação principal">
+    <a mat-button routerLink="/pacotes" routerLinkActive="active-link">Pacotes</a>
+    <a mat-button routerLink="/voos" routerLinkActive="active-link">Voos</a>
+    <a mat-button routerLink="/guias" routerLinkActive="active-link">Guias</a>
+    <a mat-button routerLink="/hospedagens" routerLinkActive="active-link">Hospedagens</a>
+  </nav>
+  <span class="toolbar-spacer"></span>
+  <ng-container *ngIf="auth.user$ | async as user; else guestLinks">
+    <a mat-button routerLink="/minhas-compras">Minhas compras</a>
+    <a *ngIf="user.tipo === 'admin'" mat-button routerLink="/admin">Admin</a>
+    <span class="welcome">Olá, {{ user.nome.split(' ')[0] }}</span>
+    <button mat-button type="button" (click)="logout()">Sair</button>
+  </ng-container>
+  <ng-template #guestLinks>
+    <a mat-button routerLink="/login">Entrar</a>
+    <a mat-flat-button color="accent" routerLink="/cadastro">Cadastrar</a>
+  </ng-template>
+</mat-toolbar>
+
+<main class="page-shell">
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="site-footer">© 2026 GuiaJa · Turismo com experiências locais</footer>

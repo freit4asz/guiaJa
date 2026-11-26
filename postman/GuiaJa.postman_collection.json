@@ -1,0 +1,295 @@
+{
+  "info": {
+    "_postman_id": "71d56f29-ec53-4d42-a388-f43c567d7f0b",
+    "name": "GuiaJa API",
+    "description": "Smoke tests da API GuiaJa. Importe a coleção, configure baseUrl e execute Login antes das rotas autenticadas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "loginEmail", "value": "ana@email.com" },
+    { "key": "loginPassword", "value": "Senha@123" },
+    { "key": "adminEmail", "value": "admin@guiaja.com" },
+    { "key": "adminPassword", "value": "Admin@1234" },
+    { "key": "reservationDate", "value": "" },
+    { "key": "basicAuth", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Autenticação",
+      "item": [
+        {
+          "name": "Login cliente (salva Basic)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login aceito', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.collectionVariables.set('basicAuth', result.authorization);",
+                  "pm.test('retorna credencial HTTP Basic', () => pm.expect(result.authorization).to.match(/^Basic /));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"senha\": \"{{loginPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/login"
+          }
+        },
+        {
+          "name": "Reservas sem Basic retorna 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('acesso não autenticado negado', () => pm.response.to.have.status(401));",
+                  "pm.test('solicita HTTP Basic', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.match(/^Basic/));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/reservas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catálogo público",
+      "item": [
+        { "name": "Listar pacotes", "request": { "method": "GET", "url": "{{baseUrl}}/api/pacotes" } },
+        { "name": "Listar guias", "request": { "method": "GET", "url": "{{baseUrl}}/api/guias" } },
+        { "name": "Listar hospedagens", "request": { "method": "GET", "url": "{{baseUrl}}/api/hoteis" } },
+        { "name": "Listar voos", "request": { "method": "GET", "url": "{{baseUrl}}/api/voos" } }
+      ]
+    },
+    {
+      "name": "Reservas autenticadas",
+      "item": [
+        {
+          "name": "Listar minhas reservas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{basicAuth}}" }],
+            "url": "{{baseUrl}}/api/reservas"
+          }
+        },
+        {
+          "name": "Criar reserva de pacote",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const departure = new Date();",
+                  "departure.setDate(departure.getDate() + 30);",
+                  "pm.collectionVariables.set('reservationDate', departure.toISOString().slice(0, 10));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "{{basicAuth}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"pacote\",\n  \"idPacote\": 1,\n  \"idGuia\": 1,\n  \"idHospedagem\": 1,\n  \"dataIda\": \"{{reservationDate}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/reservas"
+          }
+        },
+        {
+          "name": "Comprar voo avulso",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "{{basicAuth}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"voo\",\n  \"idPassagem\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/reservas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Perfil e mensagens",
+      "item": [
+        {
+          "name": "Consultar meu perfil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perfil autenticado consultado', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{basicAuth}}" }],
+            "url": "{{baseUrl}}/api/perfil"
+          }
+        },
+        {
+          "name": "Atualizar meu perfil",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "{{basicAuth}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Ana Silva\",\n  \"telefone\": \"11999990000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/perfil"
+          }
+        },
+        {
+          "name": "Enviar mensagem para guia",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "{{basicAuth}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idGuia\": 1,\n  \"conteudo\": \"Olá! Gostaria de combinar os detalhes da viagem.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/mensagens"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Administração (requer login admin)",
+      "item": [
+        {
+          "name": "Cliente não acessa administração (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perfil cliente proibido', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{basicAuth}}" }],
+            "url": "{{baseUrl}}/api/admin/pacotes"
+          }
+        },
+        {
+          "name": "Login administrador (salva Basic)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login admin aceito', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.collectionVariables.set('basicAuth', result.authorization);",
+                  "pm.test('perfil admin', () => pm.expect(result.tipo).to.eql('admin'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/login"
+          }
+        },
+        {
+          "name": "Listar pacotes administrativos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perfil admin autorizado', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{basicAuth}}" }],
+            "url": "{{baseUrl}}/api/admin/pacotes"
+          }
+        },
+        {
+          "name": "Ver painel de compras e acessos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{basicAuth}}" }],
+            "url": "{{baseUrl}}/api/admin/dashboard"
+          }
+        },
+        {
+          "name": "Consultar acessos recentes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{basicAuth}}" }],
+            "url": "{{baseUrl}}/api/admin/accesses?page=1&limit=25"
+          }
+        },
+        {
+          "name": "Ver candidaturas recebidas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{basicAuth}}" }],
+            "url": "{{baseUrl}}/api/admin/candidaturas"
+          }
+        },
+        {
+          "name": "Ver status de e-mails enviados",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{basicAuth}}" }],
+            "url": "{{baseUrl}}/api/admin/notificacoes-email"
+          }
+        }
+      ]
+    }
+  ]
+}

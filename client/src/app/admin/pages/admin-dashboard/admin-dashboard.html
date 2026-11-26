@@ -1,0 +1,126 @@
+<section class="page-heading">
+  <p class="eyebrow">Administração do GuiaJa</p>
+  <h1>Painel operacional</h1>
+  <p>Indicadores do sistema e manutenção dos dados de destinos, pacotes, guias e hospedagens.</p>
+</section>
+<div *ngIf="loading" class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+<p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+
+<ng-container *ngIf="data as dashboard">
+  <section class="kpi-grid">
+    <mat-card><mat-card-content><p>Compras registradas</p><strong>{{ dashboard.totals.compras }}</strong></mat-card-content></mat-card>
+    <mat-card><mat-card-content><p>Faturamento confirmado</p><strong>{{ dashboard.totals.faturamento | currency:'BRL' }}</strong></mat-card-content></mat-card>
+    <mat-card><mat-card-content><p>Acessos registrados</p><strong>{{ dashboard.totals.acessos }}</strong></mat-card-content></mat-card>
+    <mat-card><mat-card-content><p>Clientes cadastrados</p><strong>{{ dashboard.totals.clientes }}</strong></mat-card-content></mat-card>
+  </section>
+
+  <div class="summary-grid">
+    <mat-card>
+      <mat-card-content>
+        <h2>Pacotes mais reservados</h2>
+        <p *ngFor="let item of dashboard.topPackages">
+          <strong>{{ item.pacote }}</strong>
+          <span>{{ item.total_reservas }} compras · {{ item.valor_total | currency:'BRL' }}</span>
+        </p>
+        <p *ngIf="!dashboard.topPackages.length">Ainda não há compras de pacotes.</p>
+      </mat-card-content>
+    </mat-card>
+    <mat-card>
+      <mat-card-content>
+        <h2>Resumo das compras</h2>
+        <p>Confirmadas <strong>{{ dashboard.totals.confirmadas }}</strong></p>
+        <p>Pendentes <strong>{{ dashboard.totals.pendentes }}</strong></p>
+        <p>Canceladas <strong>{{ dashboard.totals.canceladas }}</strong></p>
+        <p>E-mail administrativo <strong>{{ dashboard.emailConfigured ? 'configurado' : 'não configurado' }}</strong></p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</ng-container>
+
+<p *ngIf="operationsError" class="error-message" role="alert">{{ operationsError }}</p>
+<mat-tab-group class="admin-tabs">
+  <mat-tab label="Compras">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Comprador</th><th>Pacote / voo</th><th>Destino</th><th>Data e hora</th><th>Total</th><th>Guia</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let purchase of purchases">
+            <td>{{ purchase.cliente }}<br><small>{{ purchase.emailCliente }}</small></td>
+            <td>{{ purchase.pacote || ('Voo ' + purchase.origemVoo + ' → ' + purchase.destinoVoo) }}<br><small>{{ purchase.codigo }}</small></td>
+            <td>{{ purchase.cidade || purchase.destinoVoo }}<span *ngIf="purchase.estado">, {{ purchase.estado }}</span></td>
+            <td>{{ purchaseDateTime(purchase.dataHoraCompra) }}</td>
+            <td>{{ purchase.total | currency:'BRL' }}</td>
+            <td>
+              <mat-form-field appearance="outline" class="guide-select">
+                <mat-select [(ngModel)]="guideSelections[purchase.id]" [disabled]="!!purchase.idPassagem">
+                  <mat-option [value]="null">Sem guia</mat-option>
+                  <mat-option *ngFor="let guide of guides" [value]="guide.id">{{ guide.nome }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button mat-button type="button" (click)="updateGuide(purchase)" [disabled]="!!purchase.idPassagem">Salvar</button>
+            </td>
+            <td>{{ purchase.status }}</td>
+          </tr>
+          <tr *ngIf="!purchases.length"><td colspan="7">Nenhuma compra encontrada.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </mat-tab>
+  <mat-tab label="Acessos">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Usuário</th><th>Método e caminho</th><th>HTTP</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let access of accesses">
+            <td>{{ access.data | date:'short' }}</td>
+            <td>{{ access.usuario || 'Visitante' }}<br><small>{{ access.email || '' }}</small></td>
+            <td>{{ access.metodo }} {{ access.caminho }}</td>
+            <td>{{ access.status }}</td>
+          </tr>
+          <tr *ngIf="!accesses.length"><td colspan="4">Nenhum acesso encontrado.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </mat-tab>
+  <mat-tab label="Candidaturas e e-mails">
+    <section class="operations-list">
+      <h2>Candidaturas a guia</h2>
+      <mat-card *ngFor="let application of applications">
+        <mat-card-content>
+          <h3>{{ application.nome }} · {{ application.status }}</h3>
+          <p>{{ application.email }}<span *ngIf="application.telefone"> · {{ application.telefone }}</span></p>
+          <p>{{ application.curriculo }}</p>
+          <small>Enviada em {{ application.dataCandidatura | date:'short' }} · E-mail: {{ application.statusEmail }}</small>
+        </mat-card-content>
+      </mat-card>
+      <p *ngIf="!applications.length">Nenhuma candidatura recebida.</p>
+      <h2>Notificações por e-mail</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Destinatário</th><th>Assunto</th><th>Status</th><th>Voucher / candidato</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let notification of notifications">
+              <td>{{ notification.data | date:'short' }}</td>
+              <td>{{ notification.destinatario }}</td>
+              <td>{{ notification.assunto }}</td>
+              <td>{{ notification.status }} · {{ notification.tentativas }} tentativas</td>
+              <td>{{ notification.voucher || notification.candidato || '—' }}<small *ngIf="notification.erro"><br>{{ notification.erro }}</small></td>
+            </tr>
+            <tr *ngIf="!notifications.length"><td colspan="5">Nenhuma notificação registrada.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </mat-tab>
+  <mat-tab label="CRUD de dados">
+    <section class="crud-section">
+      <h2>Gerenciar cadastros relacionados</h2>
+      <mat-tab-group>
+        <mat-tab label="Destinos"><app-resource-crud resource="destinos"></app-resource-crud></mat-tab>
+        <mat-tab label="Pacotes"><app-resource-crud resource="pacotes"></app-resource-crud></mat-tab>
+        <mat-tab label="Guias"><app-resource-crud resource="guias"></app-resource-crud></mat-tab>
+        <mat-tab label="Hospedagens"><app-resource-crud resource="hoteis"></app-resource-crud></mat-tab>
+      </mat-tab-group>
+    </section>
+  </mat-tab>
+</mat-tab-group>

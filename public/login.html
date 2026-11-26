@@ -24,7 +24,9 @@
     if (erros >= 5) return mensagem('Muitas tentativas. Aguarde um momento e atualize a página.');
     try {
       const u = await api('/api/login', {email: $('#email').value.trim(), senha: $('#senha').value});
-      salvar('sessao', u);      // {id, nome, email}
+      sessionStorage.setItem('guiaja.basic', u.authorization);
+      delete u.authorization;
+      salvar('sessao', u);
       location.href = 'index.html';
     } catch (e) { erros++; mensagem(e.message); }
   };

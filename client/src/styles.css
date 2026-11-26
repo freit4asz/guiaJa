@@ -1,0 +1,40 @@
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+:root {
+  --guiaja-navy: #0b2a4a;
+  --guiaja-teal: #0d8aa6;
+  --guiaja-green: #1f9d6b;
+  --guiaja-bg: #f3f8fb;
+  --guiaja-border: #d9e4ec;
+}
+
+html, body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--guiaja-bg);
+  color: #1b2b3a;
+  font-family: Poppins, "Helvetica Neue", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+a { color: var(--guiaja-teal); }
+
+.active-link { color: var(--guiaja-teal) !important; background: #eef8fa; }
+
+.mat-mdc-card {
+  border-radius: 14px !important;
+  box-shadow: 0 8px 26px rgb(11 42 74 / 7%) !important;
+}
+
+.mat-mdc-unelevated-button.mat-primary {
+  --mdc-filled-button-container-color: var(--guiaja-teal);
+}
+
+.mat-mdc-unelevated-button.mat-accent {
+  --mdc-filled-button-container-color: var(--guiaja-green);
+}
+
+.mat-mdc-outlined-button {
+  --mdc-outlined-button-outline-color: var(--guiaja-border);
+}

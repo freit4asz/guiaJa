@@ -23,7 +23,12 @@
     const nome = $('#nome').value.trim(), email = $('#email').value.trim(), curriculo = $('#curriculo').value.trim();
     if (!nome || !curriculo) return mensagem('Preencha nome e currículo.');
     if (!emailValido(email)) return mensagem('Digite um e-mail válido.');
-    try { await api('/api/guias/candidatura', {nome, email, curriculo}); mensagem('Cadastro enviado! Nossa equipe vai analisar seu perfil.', 'ok'); }
+    try {
+      const resultado = await api('/api/guias/candidatura', {nome, email, curriculo});
+      mensagem(resultado.emailStatus === 'aguardando_configuracao'
+        ? 'Candidatura salva. A notificação por e-mail será enviada após a configuração SMTP do administrador.'
+        : 'Candidatura salva e notificação enfileirada para o administrador.', 'ok');
+    }
     catch (e) { mensagem(e.message); }
   };
 </script>

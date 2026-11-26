@@ -1,0 +1,39 @@
+<section class="page-heading">
+  <p class="eyebrow">Hospedagens</p>
+  <h1>Hospedagens disponíveis</h1>
+  <p>Escolha uma hospedagem e reserve somente a estadia, sem precisar comprar um pacote de viagem.</p>
+</section>
+<div *ngIf="loading" class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+<p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+<section class="hotel-grid" *ngIf="!loading">
+  <mat-card *ngFor="let hotel of hotels">
+    <img class="hotel-image" [src]="imageFor(hotel)" [alt]="hotel.nome" loading="lazy">
+    <mat-card-content>
+      <p class="eyebrow">{{ hotel.local }}</p>
+      <h2>{{ hotel.nome }}</h2>
+      <p *ngIf="hotel.endereco">{{ hotel.endereco }}</p>
+      <p>⭐ {{ hotel.nota }} · {{ hotel.aval }} avaliações</p>
+      <p class="hotel-rate">{{ hotel.diaria | currency:'BRL' }} / noite</p>
+      <form class="hotel-booking" (ngSubmit)="purchase(hotel)">
+        <h3>Reservar hospedagem</h3>
+        <mat-form-field appearance="outline">
+          <mat-label>Data do check-in</mat-label>
+          <input matInput type="date" [name]="'checkin-' + hotel.id" [min]="minDate" [(ngModel)]="hotelDates[hotel.id]" required>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Noites</mat-label>
+          <input matInput type="number" [name]="'noites-' + hotel.id" min="1" max="30" [(ngModel)]="hotelNights[hotel.id]" required>
+        </mat-form-field>
+        <p class="hotel-estimate">
+          Total estimado
+          <strong>{{ hotel.diaria * (hotelNights[hotel.id] || 1) | currency:'BRL' }}</strong>
+        </p>
+        <p *ngIf="bookingErrors[hotel.id]" class="error-message" role="alert">{{ bookingErrors[hotel.id] }}</p>
+        <button mat-flat-button color="primary" type="submit" [disabled]="submittingHotelId !== null">
+          {{ submittingHotelId === hotel.id ? 'Reservando...' : (isAuthenticated ? 'Reservar só hospedagem' : 'Entrar para reservar') }}
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+  <p *ngIf="!hotels.length && !errorMessage">Ainda não há hospedagens cadastradas.</p>
+</section>

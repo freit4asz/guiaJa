@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Minhas compras – GuiaJa</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .compras { max-width: 1000px; margin: 0 auto; padding: 36px 22px 64px; }
+    .compra-card { background: #fff; border: 1px solid #e1e9e5; border-radius: 12px; padding: 22px; margin: 18px 0; box-shadow: 0 4px 16px #173c350d; }
+    .compra-card:target { outline: 3px solid #62a78b; }
+    .compra-topo { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+    .compra-topo h2 { margin: 0; }
+    .compra-detalhes { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 12px; margin: 18px 0; }
+    .compra-detalhes div { padding: 12px; border-radius: 8px; background: #f5f8f6; }
+    .compra-detalhes strong { display: block; color: #52635d; font-size: .86rem; margin-bottom: 4px; }
+    .compra-roteiro { padding-left: 22px; }
+    .compra-acoes { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; border-top: 1px solid #e8eeeb; padding-top: 16px; }
+    .compra-acoes .campo { margin: 0; min-width: 220px; }
+    .compra-status { display: inline-block; padding: 5px 10px; border-radius: 999px; background: #e8f3ed; color: #20583f; font-weight: 600; }
+    .compra-status.cancelada { background: #f8eaea; color: #8c2525; }
+    @media (max-width: 600px) {
+      .compras { padding: 24px 14px 40px; }
+      .compra-card { padding: 16px; }
+      .compra-acoes { align-items: stretch; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div id="topo"></div>
+  <main class="compras">
+    <h1 id="titulo-compras">Minhas compras</h1>
+    <p>Acesse os detalhes das suas reservas, vouchers e opções de alteração.</p>
+    <p id="compras-status" class="msg" role="status"></p>
+    <div id="lista-compras"></div>
+  </main>
+  <div id="rodape"></div>
+  <script src="app.js"></script>
+  <script>
+    layout();
+    const currentUser = usuario();
+
+    function escapeHTML(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[char]));
+    }
+
+    function showStatus(text, isError = false) {
+      const element = $('#compras-status');
+      element.textContent = text;
+      element.className = isError ? 'msg erro' : 'msg';
+    }
+
+    function dateOnly(value) {
+      if (!value) return '';
+      return String(value).slice(0, 10);
+    }
+
+    function formatDate(value) {
+      const date = dateOnly(value);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return escapeHTML(value);
+      return date.split('-').reverse().join('/');
+    }
+
+    function formatPurchaseDateTime(value, fallbackDate) {
+      if (!value) return `${formatDate(fallbackDate)} · horário não registrado`;
+      const date = new Date(`${String(value).replace(' ', 'T')}Z`);
+      return Number.isNaN(date.getTime())
+        ? escapeHTML(value)
+        : date.toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo'});
+    }
+
+    function reservationCard(reservation) {
+      const cancelled = reservation.status === 'Cancelada';
+      const flightPurchase = reservation.tipoCompra === 'voo';
+      const itemName = flightPurchase
+        ? `Voo ${reservation.origemVoo} → ${reservation.destinoVoo}`
+        : reservation.pacote || reservation.hospedagem || 'Reserva';
+      const destination = flightPurchase
+        ? `${reservation.origemVoo} → ${reservation.destinoVoo}`
+        : [reservation.cidade, reservation.estado, reservation.pais].filter(Boolean).join(', ');
+      const itinerary = !flightPurchase && reservation.guia && reservation.roteiro?.length
+        ? `<h3>Roteiro</h3><ol class="compra-roteiro">${reservation.roteiro.map(step => `<li>${escapeHTML(step)}</li>`).join('')}</ol>`
+        : '';
+      const controls = cancelled ? '<p class="admin-note">Esta compra foi cancelada.</p>' : flightPurchase ? `
+        <div class="compra-acoes"><button class="btn claro" data-cancel="${reservation.id}">Cancelar compra</button></div>` : `
+        <div class="compra-acoes">
+          <div class="campo">
+            <label for="data-${reservation.id}">Alterar data da viagem</label>
+            <input id="data-${reservation.id}" class="data-compra" type="date"
+                   min="${new Date().toISOString().slice(0, 10)}" value="${dateOnly(reservation.dataIda)}">
+          </div>
+          <button class="btn" data-update-date="${reservation.id}">Salvar nova data</button>
+          <button class="btn claro" data-cancel="${reservation.id}">Cancelar compra</button>
+        </div>`;
+      return `<article class="compra-card" id="compra-${reservation.id}">
+        <div class="compra-topo">
+          <div><h2>${escapeHTML(itemName)}</h2><span>${escapeHTML(destination || 'Hospedagem avulsa')}</span></div>
+          <span class="compra-status ${cancelled ? 'cancelada' : ''}">${escapeHTML(reservation.status)}</span>
+        </div>
+        <div class="compra-detalhes">
+          <div><strong>Voucher</strong>${escapeHTML(reservation.codigo)}</div>
+          <div><strong>Data e hora da compra</strong>${formatPurchaseDateTime(reservation.dataHoraCompra, reservation.dataCompra)}</div>
+          <div><strong>Data da viagem/check-in</strong>${formatDate(reservation.dataIda)}</div>
+          <div><strong>Valor registrado</strong>${moeda(reservation.total)}</div>
+          <div><strong>${flightPurchase ? 'Tipo de compra' : 'Pacote'}</strong>${flightPurchase ? 'Passagem aérea' : `${escapeHTML(reservation.tipoPacote || (reservation.pacote ? 'Pacote turístico' : 'Hospedagem avulsa'))}${reservation.duracaoDias ? ` · ${reservation.duracaoDias} dias` : ''}`}</div>
+          ${flightPurchase ? `<div><strong>Trecho</strong>${escapeHTML(reservation.origemVoo)} → ${escapeHTML(reservation.destinoVoo)}</div>` : ''}
+          ${reservation.valorDesconto > 0 ? `<div><strong>Preço original do pacote</strong>${moeda(reservation.valorPacoteOriginal)}</div><div><strong>Desconto do pacote</strong>− ${moeda(reservation.valorDesconto)}</div>` : ''}
+          ${reservation.descricaoPacote ? `<div><strong>Sobre o pacote</strong>${escapeHTML(reservation.descricaoPacote)}</div>` : ''}
+          ${!flightPurchase ? reservation.guia ? `<div><strong>Guia</strong>${escapeHTML(reservation.guia)}${reservation.especialidadeGuia ? ` · ${escapeHTML(reservation.especialidadeGuia)}` : ''}${reservation.valorHoraGuia ? ` · ${moeda(reservation.valorHoraGuia)}/h` : ''}${reservation.cidadeGuia ? `<br>Localização: ${escapeHTML([reservation.cidadeGuia, reservation.estadoGuia, reservation.paisGuia].filter(Boolean).join(', '))}` : '<br>Localização não informada'}</div>` : '<div><strong>Guia</strong>Sem guia</div>' : ''}
+          ${reservation.hospedagem ? `<div><strong>Hospedagem</strong>${escapeHTML(reservation.hospedagem)}${reservation.enderecoHospedagem ? ` · ${escapeHTML(reservation.enderecoHospedagem)}` : ''}</div>` : ''}
+          ${reservation.diariaHospedagem ? `<div><strong>Diária da hospedagem</strong>${moeda(reservation.diariaHospedagem)}</div>` : ''}
+          ${reservation.statusPagamento ? `<div><strong>Status do pagamento</strong>${escapeHTML(reservation.statusPagamento)}</div>` : ''}
+        </div>
+        ${itinerary}
+        ${controls}
+      </article>`;
+    }
+
+    async function loadPurchases() {
+      if (!currentUser) {
+        location.href = 'login.html';
+        return;
+      }
+      if (currentUser.tipo === 'admin') $('#titulo-compras').textContent = 'Compras';
+      try {
+        const reservations = await api('/api/reservas');
+        if (!reservations.length) {
+          $('#lista-compras').innerHTML = '<p>Você ainda não tem compras registradas. <a href="pacotes.html">Conheça os pacotes</a> ou <a href="voos.html">compre um voo</a>.</p>';
+          showStatus('');
+          return;
+        }
+        $('#lista-compras').innerHTML = reservations.map(reservationCard).join('');
+        showStatus(`${reservations.length} compra(s) encontrada(s).`);
+        const requestedId = new URLSearchParams(location.search).get('id');
+        if (requestedId) document.getElementById(`compra-${Number(requestedId)}`)?.scrollIntoView({behavior: 'smooth'});
+      } catch (error) {
+        showStatus(error.message, true);
+      }
+    }
+
+    $('#lista-compras').addEventListener('click', async event => {
+      const updateButton = event.target.closest('[data-update-date]');
+      const cancelButton = event.target.closest('[data-cancel]');
+      if (!updateButton && !cancelButton) return;
+
+      const button = updateButton || cancelButton;
+      const reservationId = button.dataset.updateDate || button.dataset.cancel;
+      button.disabled = true;
+      try {
+        if (updateButton) {
+          const date = $(`#data-${reservationId}`).value;
+          if (!date) throw new Error('Escolha uma data para a viagem.');
+          await api(`/api/reservas/${reservationId}`, {dataIda: date}, 'PUT');
+          showStatus('Data da viagem atualizada.');
+        } else {
+          if (!confirm('Confirma o cancelamento desta compra?')) {
+            button.disabled = false;
+            return;
+          }
+          await api(`/api/reservas/${reservationId}`, null, 'DELETE');
+          showStatus('Compra cancelada. O voucher e os dados continuam disponíveis no histórico.');
+        }
+        await loadPurchases();
+      } catch (error) {
+        showStatus(error.message, true);
+        button.disabled = false;
+      }
+    });
+
+    loadPurchases();
+  </script>
+</body>
+</html>

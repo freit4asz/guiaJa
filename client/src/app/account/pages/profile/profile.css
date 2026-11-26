@@ -1,0 +1,53 @@
+.profile-page { max-width: 1050px; margin: 0 auto; }
+.page-heading { margin-bottom: 1.5rem; }
+.page-heading h1 { margin: 0.4rem 0; font-size: clamp(2rem, 5vw, 3rem); }
+.page-heading p:last-child { color: #64748b; }
+.eyebrow { margin: 0 0 0.3rem; color: #0f766e; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+.profile-welcome { display: flex; align-items: center; gap: 1rem; padding: 1.4rem 1.6rem; border-radius: 1.1rem; color: #fff; background: linear-gradient(120deg, #0b2a4a, #0f766e); box-shadow: 0 12px 30px rgb(11 42 74 / 15%); }
+.profile-welcome .eyebrow, .profile-welcome p:last-child { color: #d7f4f0; }
+.profile-welcome h2 { margin: 0; font-size: 1.5rem; }
+.profile-welcome p:last-child { margin: 0.3rem 0 0; }
+.profile-welcome a { margin-left: auto; flex-shrink: 0; }
+.profile-avatar { display: grid; width: 4rem; height: 4rem; flex-shrink: 0; place-items: center; border-radius: 50%; color: #115e59; background: #ccfbf1; font-size: 1.7rem; font-weight: 700; }
+.account-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 1rem 0; }
+.stat-card mat-card-content { display: flex; align-items: center; gap: 0.9rem; min-height: 85px; }
+.stat-card p { margin: 0 0 0.25rem; color: #64748b; font-size: 0.88rem; }
+.stat-card strong { color: #0b2a4a; font-size: 1.35rem; }
+.stat-icon, .trip-icon { display: grid; width: 2.8rem; height: 2.8rem; flex-shrink: 0; place-items: center; border-radius: 0.85rem; color: #0f766e; background: #e6f7f5; }
+.profile-columns { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr); gap: 1rem; align-items: start; }
+.activity-card, .profile-card { padding: 0.4rem; }
+.section-title { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1.1rem; }
+.section-title h2 { margin: 0; color: #0b2a4a; font-size: 1.2rem; }
+.section-icon { color: #0f766e; }
+.recent-purchase { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0; border-top: 1px solid #e8eef2; }
+.trip-copy { display: grid; min-width: 0; gap: 0.25rem; flex: 1; }
+.trip-copy strong { overflow: hidden; color: #0b2a4a; text-overflow: ellipsis; white-space: nowrap; }
+.trip-copy span, .trip-price span { color: #64748b; font-size: 0.82rem; }
+.trip-copy .trip-voucher { color: #0f766e; font-size: 0.75rem; }
+.trip-price { display: grid; justify-items: end; gap: 0.25rem; white-space: nowrap; }
+.trip-price strong { color: #0b2a4a; }
+.trip-price .cancelled { color: #b91c1c; }
+.empty-purchases { display: grid; justify-items: center; padding: 1.5rem 0.5rem; text-align: center; }
+.empty-purchases > mat-icon { width: 3rem; height: 3rem; color: #0f766e; font-size: 3rem; }
+.empty-purchases h3 { margin: 0.75rem 0 0.25rem; }
+.empty-purchases p { color: #64748b; }
+.account-details { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+.account-details p { display: flex; align-items: center; gap: 0.75rem; margin: 0; color: #0f766e; }
+.account-details span { display: grid; gap: 0.15rem; color: #0b2a4a; }
+.account-details small { color: #64748b; }
+.profile-card h3 { margin: 1rem 0; color: #0b2a4a; font-size: 1rem; }
+.profile-card form { display: grid; gap: 0.35rem; margin-top: 1rem; }
+.profile-card mat-form-field { width: 100%; }
+.email-note { margin: 0 0 0.5rem; color: #64748b; font-size: 0.8rem; }
+.success-message { color: #166534; }
+.error-message { color: #b91c1c; }
+.loading-state, .inline-loading { display: flex; align-items: center; justify-content: center; gap: 0.75rem; min-height: 100px; color: #64748b; }
+.inline-loading { min-height: 140px; }
+
+@media (max-width: 760px) {
+  .profile-welcome { flex-wrap: wrap; padding: 1.1rem; }
+  .profile-welcome a { margin-left: 0; }
+  .account-stats { grid-template-columns: 1fr; gap: 0.65rem; }
+  .stat-card mat-card-content { min-height: 65px; }
+  .profile-columns { grid-template-columns: 1fr; }
+}

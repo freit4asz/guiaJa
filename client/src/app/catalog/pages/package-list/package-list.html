@@ -1,0 +1,42 @@
+<section class="page-heading">
+  <img src="/assets/images/pacote-rio.jpg" alt="Vista do Rio de Janeiro" fetchpriority="high">
+  <div class="hero-copy">
+    <p class="eyebrow">Viagens com experiências locais</p>
+    <h1>O Brasil espera por você.</h1>
+    <p>Escolha um destino, personalize sua viagem e reserve com 5% de desconto no pacote.</p>
+    <a mat-flat-button color="primary" routerLink="/voos">Explorar voos</a>
+  </div>
+</section>
+
+<div *ngIf="loading" class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+<p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+
+<section class="card-grid" *ngIf="!loading && !errorMessage">
+  <mat-card class="travel-card" *ngFor="let item of packages">
+    <div class="destination-art" [style.background]="item.cor || '#dbeafe'">
+      <img *ngIf="imageFor(item) as image" [src]="image" [alt]="item.nome" loading="lazy">
+      <span class="destination-label">{{ item.cidade || item.nome }}</span>
+      <span class="destination-duration">{{ item.dias }} dias</span>
+    </div>
+    <mat-card-content>
+      <p class="eyebrow">{{ item.cidade }}<span *ngIf="item.estado">, {{ item.estado }}</span></p>
+      <h2>{{ item.nome }}</h2>
+      <p class="description">{{ item.desc }}</p>
+      <div class="package-meta">
+        <span>{{ item.tipo }}</span>
+        <span class="discount-badge">5% OFF</span>
+      </div>
+      <p class="price">
+        <s>{{ item.precoOriginal | currency:'BRL' }}</s>
+        <strong>{{ item.preco | currency:'BRL' }}</strong>
+      </p>
+      <a mat-flat-button color="primary" [routerLink]="['/pacotes', item.id]">Ver pacote</a>
+    </mat-card-content>
+  </mat-card>
+</section>
+
+<section class="benefits-grid" aria-label="Vantagens do GuiaJa">
+  <article><span aria-hidden="true">⚡</span><div><strong>Reservas rápidas</strong><p>Planeje sua viagem sem complicação.</p></div></article>
+  <article><span aria-hidden="true">🧭</span><div><strong>Curadoria local</strong><p>Pacotes e guias ligados aos destinos.</p></div></article>
+  <article><span aria-hidden="true">💬</span><div><strong>Seu roteiro com você</strong><p>Consulte os detalhes da compra na sua conta.</p></div></article>
+</section>

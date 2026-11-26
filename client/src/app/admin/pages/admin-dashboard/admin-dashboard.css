@@ -1,0 +1,24 @@
+.page-heading { margin-bottom: 1.5rem; }
+.page-heading h1 { margin: 0.4rem 0; font-size: clamp(2rem, 5vw, 3rem); }
+.page-heading p:last-child { color: #64748b; }
+.eyebrow { color: #0f766e; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; }
+.kpi-grid p { margin: 0 0 0.6rem; color: #64748b; }
+.kpi-grid strong { font-size: 1.7rem; color: #0f172a; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.summary-grid h2 { font-size: 1.2rem; }
+.summary-grid p { display: flex; justify-content: space-between; gap: 1rem; }
+.crud-section { margin-top: 2rem; }
+.crud-section > h2 { margin-bottom: 1rem; }
+.admin-tabs { margin-top: 1.5rem; }
+.table-wrap { overflow-x: auto; margin: 1rem 0; }
+.table-wrap table { width: 100%; border-collapse: collapse; }
+.table-wrap th, .table-wrap td { padding: 0.7rem; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+.table-wrap th { background: #f8fafc; white-space: nowrap; }
+.table-wrap small { color: #64748b; }
+.guide-select { width: 150px; }
+.operations-list { display: grid; gap: 0.75rem; padding: 1rem 0; }
+.operations-list h2 { margin: 1rem 0 0; }
+.operations-list h3 { margin: 0 0 0.5rem; }
+.loading-state { display: grid; min-height: 160px; place-items: center; }
+.error-message { color: #b91c1c; }

@@ -1,0 +1,22 @@
+<section class="page-heading">
+  <p class="eyebrow">Passagens aéreas</p>
+  <h1>Encontre seu próximo voo</h1>
+  <p>Compre voos avulsos para os destinos disponíveis. Voos avulsos têm preço integral e não recebem desconto de pacote.</p>
+</section>
+<div *ngIf="loading" class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+<p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+<section class="flight-grid" *ngIf="!loading">
+  <mat-card *ngFor="let flight of flights" class="flight-card">
+    <mat-card-content>
+      <p class="eyebrow">{{ flight.dataVoo | date:'dd/MM/yyyy' }}</p>
+      <div class="route">
+        <strong>{{ flight.origem }}</strong>
+        <mat-icon aria-hidden="true">flight_takeoff</mat-icon>
+        <strong>{{ flight.destino }}</strong>
+      </div>
+      <p class="flight-price">{{ flight.preco | currency:'BRL' }}</p>
+      <button mat-flat-button color="primary" type="button" (click)="buy(flight)">Comprar voo</button>
+    </mat-card-content>
+  </mat-card>
+  <p *ngIf="!flights.length && !errorMessage">Não há voos disponíveis no momento.</p>
+</section>

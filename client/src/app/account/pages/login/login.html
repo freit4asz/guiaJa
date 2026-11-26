@@ -1,0 +1,22 @@
+<section class="auth-wrap">
+  <mat-card class="auth-card">
+    <mat-card-content>
+      <p class="eyebrow">Bem-vindo de volta</p>
+      <h1>Entrar no GuiaJa</h1>
+      <p>Entre para concluir compras e consultar seus roteiros.</p>
+      <form (ngSubmit)="submit()">
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail</mat-label>
+          <input matInput type="email" name="email" [(ngModel)]="email" autocomplete="email" required>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Senha</mat-label>
+          <input matInput type="password" name="senha" [(ngModel)]="senha" autocomplete="current-password" required>
+        </mat-form-field>
+        <p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+        <button mat-flat-button color="primary" type="submit" [disabled]="submitting">Entrar</button>
+      </form>
+      <p class="switch-link">Ainda não tem conta? <a routerLink="/cadastro">Cadastre-se</a></p>
+    </mat-card-content>
+  </mat-card>
+</section>

@@ -1,0 +1,65 @@
+<div class="crud-panel">
+  <form class="crud-form" (ngSubmit)="save()">
+    <h3>{{ editingId === null ? 'Cadastrar' : 'Editar' }} {{ definition.title.toLowerCase() }}</h3>
+    <div class="form-grid">
+      <ng-container *ngFor="let field of definition.fields">
+        <mat-checkbox *ngIf="field.type === 'boolean'" [(ngModel)]="form[field.key]" [name]="field.key">
+          {{ field.label }}
+        </mat-checkbox>
+        <mat-form-field *ngIf="field.type === 'destination'" appearance="outline">
+          <mat-label>{{ field.label }}</mat-label>
+          <mat-select [(ngModel)]="form[field.key]" [name]="field.key" [required]="!!field.required">
+            <mat-option *ngFor="let destination of destinations" [value]="destination.id_destino">
+              {{ destination.cidade }}<span *ngIf="destination.estado">, {{ destination.estado }}</span>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field *ngIf="field.type === 'status'" appearance="outline">
+          <mat-label>{{ field.label }}</mat-label>
+          <mat-select [(ngModel)]="form[field.key]" [name]="field.key">
+            <mat-option value="pendente">Pendente</mat-option>
+            <mat-option value="aprovado">Aprovado</mat-option>
+            <mat-option value="rejeitado">Rejeitado</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field *ngIf="field.type === 'textarea'" appearance="outline" class="wide-field">
+          <mat-label>{{ field.label }}</mat-label>
+          <textarea matInput rows="3" [(ngModel)]="form[field.key]" [name]="field.key" [required]="!!field.required"></textarea>
+        </mat-form-field>
+        <mat-form-field *ngIf="field.type === 'text' || field.type === 'email' || field.type === 'number'" appearance="outline">
+          <mat-label>{{ field.label }}</mat-label>
+          <input matInput [type]="field.type" [(ngModel)]="form[field.key]" [name]="field.key" [required]="!!field.required">
+        </mat-form-field>
+      </ng-container>
+    </div>
+    <div class="form-actions">
+      <button mat-flat-button color="primary" type="submit">{{ editingId === null ? 'Cadastrar' : 'Salvar alterações' }}</button>
+      <button *ngIf="editingId !== null" mat-button type="button" (click)="cancelEdit()">Cancelar edição</button>
+    </div>
+  </form>
+
+  <p *ngIf="successMessage" class="success-message" role="status">{{ successMessage }}</p>
+  <p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+  <div *ngIf="loading" class="loading-state"><mat-spinner diameter="36"></mat-spinner></div>
+
+  <div class="table-wrap" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th *ngFor="let field of definition.fields">{{ field.label }}</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows">
+          <td *ngFor="let field of definition.fields">{{ valueOf(row, field.key) }}</td>
+          <td class="row-actions">
+            <button mat-button type="button" (click)="edit(row)">Editar</button>
+            <button mat-button color="warn" type="button" (click)="remove(row)">Excluir</button>
+          </td>
+        </tr>
+        <tr *ngIf="!rows.length"><td [attr.colspan]="definition.fields.length + 1">Nenhum registro encontrado.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

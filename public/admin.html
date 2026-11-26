@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Painel administrativo – GuiaJa</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .painel-admin { max-width: 1200px; margin: 0 auto; padding: 36px 22px 64px; }
+    .painel-admin h1, .painel-admin h2 { color: #173c35; }
+    .admin-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 14px; margin: 24px 0 34px; }
+    .admin-card, .admin-section { background: #fff; border: 1px solid #e1e9e5; border-radius: 12px; padding: 18px; box-shadow: 0 4px 16px #173c350d; }
+    .admin-card span { display: block; color: #5b6d67; font-size: .9rem; }
+    .admin-card strong { display: block; color: #173c35; font-size: 1.8rem; margin-top: 6px; }
+    .admin-section { margin: 20px 0; overflow-x: auto; }
+    .admin-section h2 { margin: 0 0 14px; font-size: 1.25rem; }
+    .admin-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    .admin-table th, .admin-table td { border-bottom: 1px solid #e8eeeb; padding: 10px 9px; text-align: left; vertical-align: middle; }
+    .admin-table th { color: #52635d; font-size: .86rem; }
+    .admin-table select { max-width: 190px; padding: 7px; }
+    .admin-table .btn { padding: 7px 10px; white-space: nowrap; }
+    .admin-actions { display: flex; align-items: center; gap: 7px; }
+    .admin-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .admin-pagination { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 12px; }
+    .admin-pagination button { padding: 7px 12px; }
+    .admin-note { color: #65756f; font-size: .9rem; }
+    .admin-error { color: #a12020; }
+    @media (max-width: 650px) {
+      .painel-admin { padding: 24px 14px 40px; }
+      .admin-toolbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div id="topo"></div>
+  <main class="painel-admin">
+    <div class="admin-toolbar">
+      <div>
+        <h1>Painel administrativo</h1>
+        <p>Acompanhe compras, acessos e guias associados às reservas.</p>
+      </div>
+      <button class="btn" id="atualizar">Atualizar dados</button>
+    </div>
+    <p id="admin-status" class="msg" role="status"></p>
+    <section class="admin-grid" id="indicadores" aria-label="Indicadores"></section>
+    <section class="admin-section">
+      <h2>Compras por mês</h2>
+      <div id="compras-mes"></div>
+    </section>
+    <section class="admin-section">
+      <h2>Pacotes mais reservados</h2>
+      <div id="pacotes-populares"></div>
+    </section>
+    <section class="admin-section">
+      <h2>Acessos por dia</h2>
+      <div id="acessos-dia"></div>
+    </section>
+    <section class="admin-section">
+      <h2>Reservas e guias</h2>
+      <p class="admin-note">Alterar o guia atualiza a associação da reserva; o valor histórico da compra não é recalculado.</p>
+      <div id="reservas"></div>
+    </section>
+    <section class="admin-section">
+      <h2>Candidaturas de guia</h2>
+      <div id="candidaturas"></div>
+    </section>
+    <section class="admin-section">
+      <h2>Notificações por e-mail</h2>
+      <p class="admin-note" id="smtp-status"></p>
+      <div id="notificacoes-email"></div>
+    </section>
+    <section class="admin-section">
+      <h2>Histórico de alterações de guia</h2>
+      <div id="historico-reservas"></div>
+    </section>
+    <section class="admin-section">
+      <h2>Acessos recentes</h2>
+      <div id="acessos"></div>
+      <div class="admin-pagination">
+        <button class="btn claro" id="pagina-anterior">Anterior</button>
+        <span id="pagina-atual"></span>
+        <button class="btn claro" id="pagina-proxima">Próxima</button>
+      </div>
+    </section>
+  </main>
+  <div id="rodape"></div>
+  <script src="app.js"></script>
+  <script>
+    layout();
+    const currentUser = usuario();
+    let accessPage = 1;
+    const accessPageSize = 25;
+
+    function escapeHTML(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[char]));
+    }
+
+    function setStatus(text, isError = false) {
+      const element = $('#admin-status');
+      element.textContent = text;
+      element.className = isError ? 'msg erro' : 'msg';
+    }
+
+    function table(headers, rows) {
+      if (!rows.length) return '<p>Nenhum registro encontrado.</p>';
+      return `<table class="admin-table"><thead><tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+    }
+
+    function displayDate(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? escapeHTML(value) : date.toLocaleString('pt-BR');
+    }
+
+    function displayPurchaseDateTime(value) {
+      if (!value) return 'Horário não registrado';
+      const date = new Date(`${String(value).replace(' ', 'T')}Z`);
+      return Number.isNaN(date.getTime())
+        ? escapeHTML(value)
+        : date.toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo'});
+    }
+
+    async function loadDashboard() {
+      if (!currentUser) {
+        location.href = 'login.html';
+        return;
+      }
+      if (currentUser.tipo !== 'admin') {
+        setStatus('Acesso exclusivo para administradores.', true);
+        return;
+      }
+
+      $('#atualizar').disabled = true;
+      setStatus('Carregando dados...');
+      try {
+        const [dashboard, reservations, guides, history, applications, notifications] = await Promise.all([
+          api('/api/admin/dashboard'),
+          api('/api/reservas'),
+          api('/api/guias'),
+          api('/api/admin/historico-reservas'),
+          api('/api/admin/candidaturas'),
+          api('/api/admin/notificacoes-email')
+        ]);
+        renderSummary(dashboard);
+        renderMonthlyPurchases(dashboard.purchasesByMonth);
+        renderPopularPackages(dashboard.topPackages);
+        renderAccessesByDay(dashboard.accessesByDay);
+        renderReservations(reservations, guides);
+        renderReservationHistory(history);
+        renderGuideApplications(applications);
+        renderEmailNotifications(notifications);
+        $('#smtp-status').textContent = dashboard.emailConfigured
+          ? 'SMTP configurado. Notificações pendentes serão processadas automaticamente.'
+          : 'SMTP ainda não configurado. Candidaturas e compras ficam salvas na fila até ADMIN_EMAIL e SMTP_* serem configurados.';
+        await loadAccesses();
+        setStatus('Dados atualizados.');
+      } catch (error) {
+        setStatus(error.message, true);
+      } finally {
+        $('#atualizar').disabled = false;
+      }
+    }
+
+    function renderSummary(data) {
+      const totals = data.totals;
+      const items = [
+        ['Compras registradas', totals.compras],
+        ['Confirmadas', totals.confirmadas],
+        ['Pendentes', totals.pendentes],
+        ['Canceladas', totals.canceladas],
+        ['Faturamento confirmado', moeda(totals.faturamento)],
+        ['Clientes cadastrados', totals.clientes],
+        ['Acessos registrados', totals.acessos]
+      ];
+      $('#indicadores').innerHTML = items.map(([label, value]) =>
+        `<article class="admin-card"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></article>`
+      ).join('');
+    }
+
+    function renderMonthlyPurchases(rows) {
+      $('#compras-mes').innerHTML = table(
+        ['Mês', 'Compras', 'Confirmadas', 'Canceladas', 'Faturamento'],
+        rows.map(row => `<tr><td>${escapeHTML(row.mes)}</td><td>${row.total_compras}</td><td>${row.confirmadas}</td><td>${row.canceladas}</td><td>${moeda(row.faturamento)}</td></tr>`)
+      );
+    }
+
+    function renderPopularPackages(rows) {
+      $('#pacotes-populares').innerHTML = table(
+        ['Pacote', 'Reservas', 'Valor reservado'],
+        rows.map(row => `<tr><td>${escapeHTML(row.pacote)}</td><td>${row.total_reservas}</td><td>${moeda(row.valor_total || 0)}</td></tr>`)
+      );
+    }
+
+    function renderAccessesByDay(rows) {
+      $('#acessos-dia').innerHTML = table(
+        ['Dia', 'Acessos', 'Usuários autenticados'],
+        rows.map(row => `<tr><td>${escapeHTML(row.dia)}</td><td>${row.total_acessos}</td><td>${row.usuarios_identificados}</td></tr>`)
+      );
+    }
+
+    function renderReservationHistory(rows) {
+      $('#historico-reservas').innerHTML = table(
+        ['Data/hora', 'Voucher', 'Ação', 'Detalhes', 'Administrador'],
+        rows.map(row => `<tr><td>${displayDate(row.data)}</td><td>${escapeHTML(row.voucher)}</td>
+            <td>${escapeHTML(row.acao)}</td><td>${escapeHTML(row.detalhes)}</td>
+            <td>${escapeHTML(row.administrador)}</td></tr>`)
+      );
+    }
+
+    function renderGuideApplications(rows) {
+      $('#candidaturas').innerHTML = table(
+        ['Data', 'Nome', 'E-mail', 'Telefone', 'Currículo', 'Status', 'E-mail'],
+        rows.map(row => `<tr>
+          <td>${displayDate(row.dataCandidatura)}</td>
+          <td>${escapeHTML(row.nome)}</td>
+          <td>${escapeHTML(row.email)}</td>
+          <td>${escapeHTML(row.telefone || '—')}</td>
+          <td>${escapeHTML(row.curriculo)}</td>
+          <td>${escapeHTML(row.status)}</td>
+          <td>${escapeHTML(row.statusEmail || 'pendente')}</td>
+        </tr>`)
+      );
+    }
+
+    function renderEmailNotifications(rows) {
+      $('#notificacoes-email').innerHTML = table(
+        ['Data', 'Assunto', 'Destinatário', 'Relacionado a', 'Status', 'Tentativas', 'Último erro'],
+        rows.map(row => `<tr>
+          <td>${displayDate(row.data)}</td>
+          <td>${escapeHTML(row.assunto)}</td>
+          <td>${escapeHTML(row.destinatario || 'ADMIN_EMAIL não configurado')}</td>
+          <td>${escapeHTML(row.voucher || row.candidato || '—')}</td>
+          <td>${escapeHTML(row.status)}</td>
+          <td>${row.tentativas}</td>
+          <td>${escapeHTML(row.erro || '—')}</td>
+        </tr>`)
+      );
+    }
+
+    function renderReservations(reservations, guides) {
+      const approvedGuides = guides.map(guide =>
+        `<option value="${guide.id}">${escapeHTML(guide.nome)}</option>`
+      ).join('');
+      $('#reservas').innerHTML = table(
+        ['Voucher', 'Compra (data/hora)', 'Data da viagem', 'Cliente', 'E-mail', 'Pacote / hospedagem', 'Guia', 'Total', 'Status', 'Ação'],
+        reservations.map(reservation => {
+          const currentGuideOption = reservation.idGuia && !guides.some(guide => guide.id === reservation.idGuia)
+            ? `<option value="${reservation.idGuia}" selected>${escapeHTML(reservation.guia)}</option>`
+            : '';
+          const options = `<option value="">Sem guia</option>${currentGuideOption}${approvedGuides}`;
+          return `<tr>
+            <td>${escapeHTML(reservation.codigo)}</td>
+            <td>${displayPurchaseDateTime(reservation.dataHoraCompra)}</td>
+            <td>${escapeHTML(reservation.dataIda)}</td>
+            <td>${escapeHTML(reservation.cliente)}</td>
+            <td>${escapeHTML(reservation.emailCliente)}</td>
+            <td>${escapeHTML(reservation.tipoCompra === 'voo' ? `Voo ${reservation.origemVoo} → ${reservation.destinoVoo}` : reservation.pacote || reservation.hospedagem || '—')}</td>
+            <td>${escapeHTML(reservation.guia || 'Sem guia')}</td>
+            <td>${moeda(reservation.total)}${reservation.valorDesconto > 0 ? `<small>Desconto: − ${moeda(reservation.valorDesconto)}</small>` : ''}</td>
+            <td>${escapeHTML(reservation.status)}</td>
+            <td><div class="admin-actions">
+              ${reservation.tipoCompra === 'voo' ? '—' : `<select aria-label="Guia da reserva ${escapeHTML(reservation.codigo)}" data-guide-select="${reservation.id}">${options}</select>
+              <button class="btn" data-save-guide="${reservation.id}" ${reservation.status === 'Cancelada' ? 'disabled' : ''}>Salvar</button>`}
+            </div></td>
+          </tr>`;
+        })
+      );
+
+      for (const reservation of reservations) {
+        const select = document.querySelector(`[data-guide-select="${reservation.id}"]`);
+        if (select) select.value = reservation.idGuia || '';
+      }
+
+      $('#reservas').onclick = async event => {
+        const button = event.target.closest('[data-save-guide]');
+        if (!button) return;
+        const id = button.dataset.saveGuide;
+        const select = document.querySelector(`[data-guide-select="${id}"]`);
+        const guideId = select.value ? Number(select.value) : null;
+        button.disabled = true;
+        try {
+          await api(`/api/admin/reservas/${id}/guia`, {idGuia: guideId}, 'PATCH');
+          setStatus('Guia da reserva atualizado. O histórico foi registrado.');
+          await loadDashboard();
+        } catch (error) {
+          setStatus(error.message, true);
+          button.disabled = false;
+        }
+      };
+    }
+
+    async function loadAccesses() {
+      const result = await api(`/api/admin/accesses?page=${accessPage}&limit=${accessPageSize}`);
+      $('#acessos').innerHTML = table(
+        ['Data/hora', 'Usuário', 'Método', 'Caminho', 'HTTP'],
+        result.items.map(access => `<tr>
+          <td>${displayDate(access.data)}</td>
+          <td>${escapeHTML(access.usuario || 'Visitante')}</td>
+          <td>${escapeHTML(access.metodo)}</td>
+          <td>${escapeHTML(access.caminho)}</td>
+          <td>${escapeHTML(access.status)}</td>
+        </tr>`)
+      );
+      const totalPages = Math.max(1, Math.ceil(result.total / accessPageSize));
+      $('#pagina-atual').textContent = `Página ${accessPage} de ${totalPages}`;
+      $('#pagina-anterior').disabled = accessPage <= 1;
+      $('#pagina-proxima').disabled = accessPage >= totalPages;
+    }
+
+    $('#atualizar').onclick = loadDashboard;
+    $('#pagina-anterior').onclick = async () => {
+      if (accessPage > 1) {
+        accessPage--;
+        try { await loadAccesses(); } catch (error) { setStatus(error.message, true); }
+      }
+    };
+    $('#pagina-proxima').onclick = async () => {
+      accessPage++;
+      try { await loadAccesses(); } catch (error) { accessPage--; setStatus(error.message, true); }
+    };
+    loadDashboard();
+  </script>
+</body>
+</html>

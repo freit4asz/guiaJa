@@ -1,0 +1,193 @@
+:host { display: block; }
+
+.page-heading {
+  margin-bottom: 2rem;
+  max-width: 760px;
+}
+
+.page-heading h1 {
+  margin: 0.4rem 0;
+  color: #0f172a;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+}
+
+.page-heading > p:last-child {
+  color: #64748b;
+  font-size: 1.05rem;
+}
+
+.eyebrow {
+  color: #0f766e;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.travel-card { overflow: hidden; }
+
+.destination-art {
+  display: grid;
+  min-height: 150px;
+  place-items: center;
+  font-size: 4rem;
+}
+
+.travel-card h2 { margin: 0.25rem 0; }
+.description { min-height: 2.8rem; color: #64748b; }
+.package-meta, .price { display: flex; align-items: center; justify-content: space-between; }
+
+.discount-badge {
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.price { flex-wrap: wrap; justify-content: flex-start; gap: 0.6rem; }
+.price s { color: #64748b; }
+.price strong { color: #0f172a; font-size: 1.2rem; }
+.loading-state { display: grid; min-height: 200px; place-items: center; }
+.error-message { color: #b91c1c; }
+
+.page-heading {
+  position: relative;
+  display: flex;
+  min-height: 380px;
+  align-items: center;
+  isolation: isolate;
+  max-width: none;
+  margin-bottom: 3rem;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  border-radius: 1.25rem;
+  background: #0b2a4a;
+  overflow: hidden;
+}
+
+.page-heading > img {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.page-heading::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, rgb(11 42 74 / 90%) 0%, rgb(11 42 74 / 62%) 52%, rgb(11 42 74 / 5%) 100%);
+}
+
+.hero-copy { max-width: 650px; }
+
+.page-heading h1 {
+  margin: 0.5rem 0 0.8rem;
+  color: white;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.05;
+}
+
+.page-heading p:not(.eyebrow) {
+  max-width: 40rem;
+  color: #f1f5f9;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.page-heading .eyebrow { color: #b6edf3; }
+
+.destination-art {
+  position: relative;
+  height: 210px;
+  min-height: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0f766e, #38bdf8);
+}
+
+.destination-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 300ms ease;
+}
+
+.travel-card:hover .destination-art img { transform: scale(1.05); }
+
+.destination-art::after {
+  position: absolute;
+  inset: 35% 0 0;
+  content: "";
+  background: linear-gradient(transparent, rgb(15 23 42 / 70%));
+  pointer-events: none;
+}
+
+.destination-label, .destination-duration {
+  position: absolute;
+  z-index: 1;
+  color: white;
+  text-shadow: 0 1px 5px rgb(0 0 0 / 40%);
+}
+
+.destination-label {
+  bottom: 1rem;
+  left: 1rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.destination-duration {
+  top: 0.8rem;
+  right: 0.8rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  background: rgb(15 23 42 / 55%);
+  font-size: 0.8rem;
+}
+
+.travel-card {
+  border-radius: 1rem;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.travel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 34px rgb(15 23 42 / 12%);
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.benefits-grid article {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1.25rem;
+  border: 1px solid #d9e4ec;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.benefits-grid article > span { font-size: 1.5rem; }
+.benefits-grid strong { color: #0b2a4a; }
+.benefits-grid p { margin: 0.25rem 0 0; color: #64748b; font-size: 0.9rem; }
+
+@media (max-width: 720px) {
+  .page-heading { min-height: 330px; }
+  .page-heading::after { background: linear-gradient(90deg, rgb(11 42 74 / 87%), rgb(11 42 74 / 45%)); }
+  .benefits-grid { grid-template-columns: 1fr; }
+}

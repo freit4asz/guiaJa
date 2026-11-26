@@ -23,9 +23,9 @@
     const i = $('#idioma').value, max = +$('#preco').value;
     const achados = GUIAS.filter(g => (!i || g.idiomas.includes(i)) && (!max || g.valorHora <= max));
     $('#lista').innerHTML = achados.map(g => `<div class="item guia-item">
-      <div class="guia-identidade"><img class="guia-avatar" src="${fotoGuia(g)}" alt="Foto de ${g.nome}"><div><h3>${g.nome}</h3>
+      <div class="guia-identidade"><span class="guia-avatar" role="img" aria-label="Iniciais de ${htmlSeguro(g.nome)}">${htmlSeguro(iniciaisGuia(g.nome))}</span><div><h3>${htmlSeguro(g.nome)}</h3>
         <span class="estrela">${estrelas(g.nota)}</span> ${g.nota} (${g.avaliacoes} avaliações)<br>
-        <small>${g.idiomas.join(', ')} · ${g.exp} anos de experiência · ${g.tag || ''}</small></div></div>
+        <small>📍 ${htmlSeguro(g.local || 'Localização não informada')} · ${htmlSeguro(g.idiomas.join(', '))} · ${g.exp} anos de experiência · ${htmlSeguro(g.tag || '')}</small></div></div>
       <div><strong>${moeda(g.valorHora)}/h</strong><br><button class="btn" data-id="${g.id}">Enviar mensagem</button></div></div>`).join('')
       || '<p class="msg erro" style="display:block">Nenhum guia com esses filtros.</p>';
   }
@@ -38,7 +38,7 @@
     <div class="chat-modal" id="chat-modal" role="dialog" aria-modal="true" aria-labelledby="chat-titulo">
       <section class="chat-painel">
         <header class="chat-cabecalho">
-          <div class="chat-guia-identidade"><img id="chat-avatar" class="chat-avatar" src="" alt=""><div><small>Conversando com</small><h2 id="chat-titulo">Guia</h2></div></div>
+          <div class="chat-guia-identidade"><span id="chat-avatar" class="chat-avatar" role="img" aria-label="Iniciais do guia"></span><div><small>Conversando com</small><h2 id="chat-titulo">Guia</h2></div></div>
           <button type="button" id="chat-fechar" aria-label="Fechar chat">×</button>
         </header>
         <div class="chat-conversas" id="chat-conversas">
@@ -55,8 +55,8 @@
   function abrirChat(g) {
     guiaSelecionado = g;
     $('#chat-titulo').textContent = g.nome;
-    $('#chat-avatar').src = fotoGuia(g);
-    $('#chat-avatar').alt = `Foto de ${g.nome}`;
+    $('#chat-avatar').textContent = iniciaisGuia(g.nome);
+    $('#chat-avatar').setAttribute('aria-label', `Iniciais de ${g.nome}`);
     $('#chat-texto').value = '';
     $('#chat-msg').className = 'msg';
     $('#chat-msg').textContent = '';
@@ -90,7 +90,7 @@
     const botao = $('#chat-enviar');
     botao.disabled = true;
     try {
-      await api('/api/mensagens', {idUsuario: u.id, idGuia: guiaSelecionado.id, conteudo: texto});
+      await api('/api/mensagens', {idGuia: guiaSelecionado.id, conteudo: texto});
       $('#chat-conversas').insertAdjacentHTML('beforeend', `<div class="chat-balao usuario"><strong>Você</strong><p>${texto.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}</p></div>`);
       $('#chat-texto').value = '';
       $('#chat-msg').textContent = 'Mensagem enviada!';

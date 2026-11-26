@@ -107,8 +107,11 @@ CREATE TABLE reserva (
   id_reserva      INT AUTO_INCREMENT PRIMARY KEY,
   codigo_voucher  VARCHAR(20) NOT NULL UNIQUE,
   data_reserva    DATE NOT NULL,
+  data_hora_reserva DATETIME NULL,
   data_ida        DATE NOT NULL,
   valor_total     DECIMAL(10,2) NOT NULL,
+  valor_pacote_original DECIMAL(10,2) NOT NULL DEFAULT 0,
+  valor_desconto  DECIMAL(10,2) NOT NULL DEFAULT 0,
   status_reserva  VARCHAR(50) NOT NULL DEFAULT 'Pendente',  -- Pendente, Confirmada, Cancelada
   id_usuario      INT NOT NULL,
   id_pacote       INT NULL,                          -- Permite hospedagem avulsa sem pacote associado
@@ -119,7 +122,55 @@ CREATE TABLE reserva (
   FOREIGN KEY (id_pacote)     REFERENCES pacote(id_pacote),
   FOREIGN KEY (id_guia)       REFERENCES guia(id_guia),
   FOREIGN KEY (id_hospedagem) REFERENCES hospedagem(id_hospedagem),
-  FOREIGN KEY (id_passagem)   REFERENCES passagem(id_passagem)
+  FOREIGN KEY (id_passagem)   REFERENCES passagem(id_passagem),
+  INDEX idx_reserva_usuario_data (id_usuario, data_reserva),
+  INDEX idx_reserva_status_data (status_reserva, data_reserva),
+  INDEX idx_reserva_guia (id_guia)
+) ENGINE=InnoDB;
+
+CREATE TABLE acesso_site (
+  id_acesso    BIGINT AUTO_INCREMENT PRIMARY KEY,
+  id_usuario   INT NULL,
+  metodo       VARCHAR(10) NOT NULL,
+  caminho      VARCHAR(255) NOT NULL,
+  status_http  SMALLINT UNSIGNED NOT NULL,
+  acessado_em  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE SET NULL,
+  INDEX idx_acesso_data (acessado_em),
+  INDEX idx_acesso_usuario_data (id_usuario, acessado_em),
+  INDEX idx_acesso_caminho_data (caminho(100), acessado_em)
+) ENGINE=InnoDB;
+
+CREATE TABLE historico_reserva (
+  id_historico      BIGINT AUTO_INCREMENT PRIMARY KEY,
+  id_reserva        INT NOT NULL,
+  id_usuario_admin  INT NOT NULL,
+  acao              VARCHAR(50) NOT NULL,
+  detalhes          TEXT NOT NULL,
+  criado_em         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva),
+  FOREIGN KEY (id_usuario_admin) REFERENCES usuario(id_usuario),
+  INDEX idx_historico_reserva_data (id_reserva, criado_em)
+) ENGINE=InnoDB;
+
+CREATE TABLE email_outbox (
+  id_email         BIGINT AUTO_INCREMENT PRIMARY KEY,
+  id_reserva       INT NULL,
+  id_guia          INT NULL,
+  destinatario     VARCHAR(254) NULL,
+  assunto          VARCHAR(255) NOT NULL,
+  conteudo_texto   MEDIUMTEXT NOT NULL,
+  status           ENUM('pendente','enviando','enviado','falhou') NOT NULL DEFAULT 'pendente',
+  tentativas       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  ultimo_erro      TEXT,
+  criado_em        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  enviado_em       DATETIME NULL,
+  FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva) ON DELETE SET NULL,
+  FOREIGN KEY (id_guia) REFERENCES guia(id_guia) ON DELETE SET NULL,
+  INDEX idx_email_fila (status, criado_em),
+  INDEX idx_email_reserva (id_reserva),
+  INDEX idx_email_guia (id_guia)
 ) ENGINE=InnoDB;
 
 CREATE TABLE pagamento (
@@ -190,7 +241,7 @@ INSERT INTO destino (cidade, estado, pais, descricao) VALUES
 ('Florianópolis',       'SC',        'Brasil',    'Ilha com dezenas de praias, trilhas e boa gastronomia.');
 
 -- Senhas de teste: clientes = Senha@123 | admin = Admin@1234
--- (guardadas como hash SHA-256; num sistema real prefira bcrypt)
+-- Os hashes SHA-256 de demonstração migram para scrypt após o primeiro login.
 INSERT INTO usuario (nome, email, telefone, senha, tipo, bloqueado, data_cadastro) VALUES
 ('Administrador GuiaJa', 'admin@guiaja.com',  '(14) 99999-0001', SHA2('Admin@1234',256), 'admin',   FALSE, '2026-09-01'),
 ('Ana Souza',            'ana@email.com',     '(14) 99888-1111', SHA2('Senha@123',256),  'cliente', FALSE, '2026-10-05'),
@@ -208,6 +259,29 @@ INSERT INTO guia (nome, email, telefone, especialidade, curriculo, valor_hora, a
 ('Antoine Girard', 'antoine@guiaja.com','(45) 99111-0004', 'Natureza e aventura',  'Guia de parques naturais, atende em francês.',                            66.00, 5, 4.50,  526, 'Disponível agora', 'aprovado',  6),
 ('Carla Mendes',   'carlam@email.com',  '(98) 99111-0005', 'Passeios de dunas',    'Guia local em Barreirinhas há 4 anos. Aguardando análise.',               NULL,  4, 0,        0, NULL,               'pendente',  4),
 ('Pedro Alves',    'pedro@email.com',   '(48) 99111-0006', 'Trilhas',              'Condutor de trilhas em Florianópolis. Aguardando análise.',               NULL,  3, 0,        0, NULL,               'pendente',  9);
+
+-- Distribui aleatoriamente os guias de demonstração entre destinos cadastrados.
+CREATE TEMPORARY TABLE guia_destinos_sorteados (
+  ordem INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id_destino INT NOT NULL
+) ENGINE=InnoDB;
+INSERT INTO guia_destinos_sorteados (id_destino)
+SELECT id_destino FROM destino ORDER BY RAND();
+
+CREATE TEMPORARY TABLE guias_sorteados (
+  ordem INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id_guia INT NOT NULL
+) ENGINE=InnoDB;
+INSERT INTO guias_sorteados (id_guia)
+SELECT id_guia FROM guia ORDER BY RAND();
+
+UPDATE guia g
+JOIN guias_sorteados gs ON gs.id_guia = g.id_guia
+JOIN guia_destinos_sorteados ds ON ds.ordem = gs.ordem
+SET g.id_destino = ds.id_destino;
+
+DROP TEMPORARY TABLE guias_sorteados;
+DROP TEMPORARY TABLE guia_destinos_sorteados;
 
 INSERT INTO guia_idioma (id_guia, id_idioma) VALUES
 (1,1),(1,2),   -- João: Português, Inglês
@@ -255,10 +329,15 @@ INSERT INTO roteiro_pacote (id_pacote, dia, descricao) VALUES
 (6,3,'Parque das Aves e retorno');
 
 INSERT INTO passagem (origem, destino_voo, data_voo, preco) VALUES
-('São Paulo (GRU)',  'Campo Grande (CGR)',   '2026-12-10',  650.00),
-('São Paulo (GRU)',  'Lisboa (LIS)',         '2026-12-18', 3200.00),
-('São Paulo (GRU)',  'Bariloche (BRC)',      '2027-01-08', 2100.00),
-('São Paulo (GRU)',  'Foz do Iguaçu (IGU)',  '2026-12-20',  480.00);
+('São Paulo (GRU)', 'Bonito (via Campo Grande - CGR)', DATE_ADD(CURDATE(), INTERVAL 30 DAY),  650.00),
+('São Paulo (GRU)', 'Bariloche (BRC)',                DATE_ADD(CURDATE(), INTERVAL 31 DAY), 2100.00),
+('São Paulo (GRU)', 'Lisboa (LIS)',                   DATE_ADD(CURDATE(), INTERVAL 32 DAY), 3200.00),
+('São Paulo (GRU)', 'Barreirinhas (via São Luís - SLZ)', DATE_ADD(CURDATE(), INTERVAL 33 DAY), 720.00),
+('São Paulo (GRU)', 'Rio de Janeiro (SDU)',            DATE_ADD(CURDATE(), INTERVAL 34 DAY),  550.00),
+('São Paulo (GRU)', 'Foz do Iguaçu (IGU)',             DATE_ADD(CURDATE(), INTERVAL 35 DAY),  480.00),
+('São Paulo (GRU)', 'Bombinhas (via Navegantes - NVT)', DATE_ADD(CURDATE(), INTERVAL 36 DAY), 690.00),
+('São Paulo (GRU)', 'Porto de Galinhas (via Recife - REC)', DATE_ADD(CURDATE(), INTERVAL 37 DAY), 780.00),
+('São Paulo (GRU)', 'Florianópolis (FLN)',             DATE_ADD(CURDATE(), INTERVAL 38 DAY),  490.00);
 
 -- Total = preço do pacote + diária x dias + valor/hora do guia x 4h x dias
 INSERT INTO reserva (codigo_voucher, data_reserva, data_ida, valor_total, status_reserva, id_usuario, id_pacote, id_guia, id_hospedagem, id_passagem) VALUES
@@ -312,7 +391,7 @@ SELECT r.codigo_voucher, r.data_reserva, r.data_ida, r.valor_total, r.status_res
        u.nome AS cliente, p.nome AS pacote, g.nome AS guia, h.nome AS hospedagem
 FROM reserva r
 JOIN usuario u ON u.id_usuario = r.id_usuario
-JOIN pacote  p ON p.id_pacote  = r.id_pacote
+LEFT JOIN pacote p ON p.id_pacote = r.id_pacote
 LEFT JOIN guia g ON g.id_guia = r.id_guia
 LEFT JOIN hospedagem h ON h.id_hospedagem = r.id_hospedagem;
 
@@ -323,12 +402,31 @@ FROM pacote p LEFT JOIN reserva r ON r.id_pacote = p.id_pacote AND r.status_rese
 GROUP BY p.id_pacote, p.nome
 ORDER BY total_reservas DESC;
 
+CREATE VIEW vw_compras_por_mes AS
+SELECT DATE_FORMAT(data_reserva, '%Y-%m') AS mes,
+       COUNT(*) AS total_compras,
+       SUM(status_reserva = 'Confirmada') AS confirmadas,
+       SUM(status_reserva = 'Cancelada') AS canceladas,
+       SUM(CASE WHEN status_reserva = 'Confirmada' THEN valor_total ELSE 0 END) AS faturamento
+FROM reserva
+GROUP BY DATE_FORMAT(data_reserva, '%Y-%m')
+ORDER BY mes DESC;
+
+CREATE VIEW vw_acessos_por_dia AS
+SELECT DATE(acessado_em) AS dia, COUNT(*) AS total_acessos,
+       COUNT(DISTINCT id_usuario) AS usuarios_identificados
+FROM acesso_site
+GROUP BY DATE(acessado_em)
+ORDER BY dia DESC;
+
 -- ---------------------------------------------------------------------
 -- 4. TESTES RÁPIDOS (selecione e execute para ver se deu certo)
 -- ---------------------------------------------------------------------
 -- SELECT * FROM vw_pacotes_ativos;
 -- SELECT * FROM vw_reservas_detalhadas;
 -- SELECT * FROM vw_pacotes_mais_reservados;
+-- SELECT * FROM vw_compras_por_mes;
+-- SELECT * FROM vw_acessos_por_dia;
 -- SELECT g.nome, GROUP_CONCAT(i.nome) AS idiomas FROM guia g
 --   JOIN guia_idioma gi ON gi.id_guia = g.id_guia JOIN idioma i ON i.id_idioma = gi.id_idioma
 --   WHERE g.status_aprovacao = 'aprovado' GROUP BY g.id_guia;

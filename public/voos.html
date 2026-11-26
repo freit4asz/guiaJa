@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Voos – GuiaJa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="topo"></div>
+<main class="miolo">
+  <h1>Passagens aéreas</h1>
+  <p>Escolha um voo disponível para comprar somente a passagem, sem reservar um pacote. Voos avulsos são cobrados pelo preço integral e não recebem o desconto de pacote.</p><br>
+  <div class="grade" id="lista-voos"></div>
+  <p id="status-voos" class="msg" role="status"></p>
+</main>
+<div id="rodape"></div>
+<script src="app.js"></script>
+<script>
+  layout();
+  api('/api/voos').then(flights => {
+    if (!flights.length) {
+      $('#status-voos').textContent = 'Não há voos disponíveis no momento.';
+      $('#status-voos').className = 'msg ok';
+      return;
+    }
+    $('#lista-voos').innerHTML = flights.map(flight => `
+      <article class="card voo-card">
+        <div class="voo-icone" aria-hidden="true">✈️</div>
+        <div class="corpo">
+          <h2>${htmlSeguro(flight.origem)} → ${htmlSeguro(flight.destino)}</h2>
+          <p>Data do voo: <strong>${dataBrasileira(flight.dataVoo)}</strong></p>
+          <p class="voo-preco">Preço integral: ${moeda(flight.preco)}</p>
+          <button class="btn" type="button" data-buy-flight="${flight.id}">Comprar passagem</button>
+        </div>
+      </article>`).join('');
+  }).catch(error => {
+    $('#status-voos').textContent = error.message;
+    $('#status-voos').className = 'msg erro';
+  });
+
+  $('#lista-voos').addEventListener('click', event => {
+    const button = event.target.closest('[data-buy-flight]');
+    if (!button) return;
+    const flightId = Number(button.dataset.buyFlight);
+    api('/api/voos').then(flights => {
+      const flight = flights.find(item => item.id === flightId);
+      if (!flight) throw new Error('Este voo não está mais disponível.');
+      adicionarAoCarrinho({
+        tipo: 'voo',
+        idPassagem: flight.id,
+        nome: `Voo ${flight.origem} → ${flight.destino}`,
+        origem: flight.origem,
+        destino: flight.destino,
+        dataVoo: flight.dataVoo,
+        total: Number(flight.preco)
+      });
+    }).catch(error => {
+      $('#status-voos').textContent = error.message;
+      $('#status-voos').className = 'msg erro';
+    });
+  });
+</script>
+</body></html>

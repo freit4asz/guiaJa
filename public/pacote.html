@@ -13,14 +13,18 @@
   const idPacote = new URLSearchParams(location.search).get('id');
   Promise.all([api('/api/pacotes/' + idPacote), api('/api/guias'), api('/api/hoteis')])
     .then(([p, GUIAS, HOTEIS]) => {
+      const packageHotels = HOTEIS.filter(hotel => Number(hotel.idDestino) === Number(p.idDestino));
       $('#conteudo').innerHTML = `
-        <h1>${p.nome}</h1><p>${p.tipo} · ${p.dias} dias · a partir de <strong>${moeda(p.preco)}</strong></p><br>
+        <h1>${htmlSeguro(p.nome)}</h1><p>Destino fixo: ${htmlSeguro([p.cidade, p.estado, p.pais].filter(Boolean).join(', '))}</p>
+        <p>${htmlSeguro(p.tipo)} · ${p.dias} dias · pacote de <span class="preco-original"><del>${moeda(p.precoOriginal)}</del></span> por <strong>${moeda(p.preco)}</strong> (${p.descontoPercentual}% de desconto)</p><br>
         <div class="detalhe">
-          <div class="caixa"><h2>Roteiro da viagem</h2><ul>${p.roteiro.map((r, i) => `<li><strong>Dia ${i + 1}:</strong> ${r}</li>`).join('')}</ul></div>
+          <div class="caixa"><h2>Roteiro da viagem</h2><ul>${p.roteiro.map((r, i) => `<li><strong>Dia ${i + 1}:</strong> ${htmlSeguro(r)}</li>`).join('')}</ul></div>
           <div class="caixa">
             <h2>Monte sua reserva</h2>
-            <div class="campo"><label for="guia">Escolha seu guia</label><select id="guia">${GUIAS.map(g => `<option value="${g.id}">${g.nome} – ${moeda(g.valorHora)}/h</option>`).join('')}</select></div><br>
-            <div class="campo"><label for="hotel"><input type="checkbox" id="incluir-hotel" checked> Incluir hospedagem</label><select id="hotel">${HOTEIS.map(h => `<option value="${h.id}">${h.nome} – ${moeda(h.diaria)}/noite</option>`).join('')}</select></div><br>
+            <div class="campo"><label for="guia">Escolha seu guia (opcional)</label><select id="guia"><option value="">Sem guia</option>${GUIAS.map(g => `<option value="${g.id}">${htmlSeguro(g.nome)}${g.local ? ` · ${htmlSeguro(g.local)}` : ''} – ${moeda(g.valorHora)}/h</option>`).join('')}</select></div><br>
+            ${packageHotels.length
+              ? `<div class="campo"><label for="hotel"><input type="checkbox" id="incluir-hotel" checked> Incluir hospedagem em ${htmlSeguro(p.cidade)}</label><select id="hotel">${packageHotels.map(h => `<option value="${h.id}">${htmlSeguro(h.nome)} – ${moeda(h.diaria)}/noite</option>`).join('')}</select></div><br>`
+              : `<p class="admin-note">Não há hospedagem cadastrada em ${htmlSeguro(p.cidade)}; nenhuma hospedagem de outra cidade será incluída neste pacote.</p><br>`}
             <div class="campo"><label for="data">Data de ida</label><input type="date" id="data"></div>
             <div class="total" id="total"></div>
             <button class="btn" id="reservar">Adicionar ao carrinho</button>
@@ -29,20 +33,22 @@
         </div>`;
       // Data mínima: hoje
       $('#data').min = new Date().toISOString().slice(0, 10);
-      // Prévia do total (o servidor recalcula na hora de gravar):
-      // preço do pacote + diária x dias + valor/hora do guia x 4h x dias
+      const hotelCheckbox = $('#incluir-hotel');
+      const hotelSelect = $('#hotel');
+      // O desconto incide apenas no preço do pacote; guia e hospedagem mantêm o valor integral.
       function calcular() {
         const g = GUIAS.find(x => x.id == $('#guia').value);
-        const hotel = $('#incluir-hotel').checked ? HOTEIS.find(x => x.id == $('#hotel').value) : null;
+        const hotel = hotelCheckbox?.checked ? packageHotels.find(x => x.id == Number(hotelSelect.value)) : null;
         const hotelTotal = hotel ? hotel.diaria * p.dias : 0;
-        return p.preco + hotelTotal + g.valorHora * 4 * p.dias;
+        return p.preco + hotelTotal + (g ? g.valorHora * 4 * p.dias : 0);
       }
       const atualizar = () => {
-        $('#hotel').disabled = !$('#incluir-hotel').checked;
+        if (hotelSelect && hotelCheckbox) hotelSelect.disabled = !hotelCheckbox.checked;
         $('#total').textContent = 'Total: ' + moeda(calcular());
       };
-      $('#guia').onchange = $('#hotel').onchange = atualizar;
-      $('#incluir-hotel').onchange = atualizar;
+      $('#guia').onchange = atualizar;
+      if (hotelSelect) hotelSelect.onchange = atualizar;
+      if (hotelCheckbox) hotelCheckbox.onchange = atualizar;
       atualizar();
 
       $('#reservar').onclick = () => {
@@ -50,18 +56,20 @@
         if (!dataIda) { mensagem('Escolha a data de ida.'); return; }
         if (dataIda < new Date().toISOString().slice(0, 10)) { mensagem('Escolha uma data que não seja no passado.'); return; }
         const guia = GUIAS.find(x => x.id == $('#guia').value);
-        const hotel = $('#incluir-hotel').checked ? HOTEIS.find(x => x.id == $('#hotel').value) : null;
+        const hotel = hotelCheckbox?.checked ? packageHotels.find(x => x.id == Number(hotelSelect.value)) : null;
         adicionarAoCarrinho({
           tipo: 'pacote',
           idPacote: p.id,
           nome: p.nome,
           emoji: p.emoji || '✈️',
           dias: p.dias,
-          idGuia: guia.id,
-          guiaNome: guia.nome,
+          idGuia: guia ? guia.id : null,
+          guiaNome: guia ? guia.nome : 'Sem guia',
           idHospedagem: hotel ? hotel.id : null,
           hotelNome: hotel ? hotel.nome : 'Sem hospedagem',
           dataIda,
+          desconto: p.desconto,
+          descontoPercentual: p.descontoPercentual,
           total: calcular()
         });
       };

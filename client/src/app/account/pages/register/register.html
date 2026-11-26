@@ -1,0 +1,29 @@
+<section class="auth-wrap">
+  <mat-card class="auth-card">
+    <mat-card-content>
+      <p class="eyebrow">Sua próxima viagem começa aqui</p>
+      <h1>Criar conta</h1>
+      <form (ngSubmit)="submit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Nome completo</mat-label>
+          <input matInput name="nome" [(ngModel)]="nome" autocomplete="name" required>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail</mat-label>
+          <input matInput type="email" name="email" [(ngModel)]="email" autocomplete="email" required>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Telefone</mat-label>
+          <input matInput type="tel" name="telefone" [(ngModel)]="telefone" autocomplete="tel" required>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Senha (mínimo 8 caracteres)</mat-label>
+          <input matInput type="password" name="senha" [(ngModel)]="senha" minlength="8" autocomplete="new-password" required>
+        </mat-form-field>
+        <p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+        <button mat-flat-button color="primary" type="submit" [disabled]="submitting">Cadastrar</button>
+      </form>
+      <p class="switch-link">Já tem conta? <a routerLink="/login">Entrar</a></p>
+    </mat-card-content>
+  </mat-card>
+</section>

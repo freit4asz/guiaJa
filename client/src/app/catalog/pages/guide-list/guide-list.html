@@ -1,0 +1,71 @@
+<section class="page-heading">
+  <p class="eyebrow">Experiências locais</p>
+  <h1>Guias que conhecem cada caminho</h1>
+  <p>Veja onde cada guia atua e escolha um profissional ao personalizar um pacote.</p>
+</section>
+<div *ngIf="loading" class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+<p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+<section class="guide-grid" *ngIf="!loading">
+  <mat-card *ngFor="let guide of guides">
+    <mat-card-content>
+      <div class="guide-avatar" aria-hidden="true">{{ guide.nome.charAt(0) }}</div>
+      <h2>{{ guide.nome }}</h2>
+      <p class="guide-location"><mat-icon aria-hidden="true">place</mat-icon>{{ guide.local || 'Localização não informada' }}</p>
+      <p>{{ guide.exp }} anos de experiência · ⭐ {{ guide.nota }} ({{ guide.avaliacoes }} avaliações)</p>
+      <mat-chip-set *ngIf="guide.idiomas.length">
+        <mat-chip *ngFor="let language of guide.idiomas">{{ language }}</mat-chip>
+      </mat-chip-set>
+      <p class="guide-rate">{{ guide.valorHora | currency:'BRL' }} / hora</p>
+      <button mat-stroked-button color="primary" type="button" (click)="openMessage(guide)">
+        <mat-icon>chat</mat-icon> Enviar mensagem
+      </button>
+      <form *ngIf="selectedGuideId === guide.id" class="guide-message-form" (ngSubmit)="sendMessage(guide)">
+        <mat-form-field appearance="outline">
+          <mat-label>Mensagem para {{ guide.nome }}</mat-label>
+          <textarea
+            matInput
+            name="guideMessage"
+            [(ngModel)]="messageText"
+            rows="3"
+            maxlength="1000"
+            required
+          ></textarea>
+          <mat-hint align="end">{{ messageText.length }}/1000</mat-hint>
+        </mat-form-field>
+        <p *ngIf="messageSuccess" class="success-message" role="status">{{ messageSuccess }}</p>
+        <p *ngIf="messageError" class="error-message" role="alert">{{ messageError }}</p>
+        <div class="guide-message-actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="messageSubmitting || !messageText.trim()">
+            {{ messageSubmitting ? 'Enviando...' : 'Enviar' }}
+          </button>
+          <button mat-button type="button" (click)="closeMessage()">Cancelar</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+  <p *ngIf="!guides.length && !errorMessage">Ainda não há guias aprovados cadastrados.</p>
+</section>
+
+<mat-card class="application-card">
+  <mat-card-content>
+    <h2>Quer ser um guia GuiaJa?</h2>
+    <p>Envie seus dados e currículo. A candidatura ficará disponível para análise da equipe.</p>
+    <form (ngSubmit)="apply()">
+      <mat-form-field appearance="outline">
+        <mat-label>Nome completo</mat-label>
+        <input matInput name="applicationName" [(ngModel)]="applicationName" required>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>E-mail</mat-label>
+        <input matInput type="email" name="applicationEmail" [(ngModel)]="applicationEmail" required>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Conte sua experiência</mat-label>
+        <textarea matInput name="applicationResume" rows="4" [(ngModel)]="applicationResume" required></textarea>
+      </mat-form-field>
+      <p *ngIf="applicationMessage" class="success-message" role="status">{{ applicationMessage }}</p>
+      <p *ngIf="applicationError" class="error-message" role="alert">{{ applicationError }}</p>
+      <button mat-flat-button color="primary" type="submit" [disabled]="applicationSubmitting">Enviar candidatura</button>
+    </form>
+  </mat-card-content>
+</mat-card>

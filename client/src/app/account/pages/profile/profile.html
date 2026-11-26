@@ -1,0 +1,110 @@
+<section class="profile-page">
+  <header class="page-heading">
+    <p class="eyebrow">Minha conta</p>
+    <h1>Seu perfil de viagem</h1>
+    <p>Acompanhe sua conta, suas compras e mantenha seus dados de contato atualizados.</p>
+  </header>
+
+  <div *ngIf="loading" class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+  <p *ngIf="errorMessage && !profile" class="error-message" role="alert">{{ errorMessage }}</p>
+
+  <ng-container *ngIf="profile && !loading">
+    <section class="profile-welcome">
+      <div class="profile-avatar" aria-hidden="true">{{ profile.nome.charAt(0) }}</div>
+      <div class="welcome-copy">
+        <p class="eyebrow">Bem-vindo(a) de volta</p>
+        <h2>{{ profile.nome }}</h2>
+        <p>{{ profile.tipo === 'admin' ? 'Administrador' : 'Sua próxima viagem começa aqui' }}</p>
+      </div>
+      <a mat-flat-button color="primary" routerLink="/minhas-compras">
+        <mat-icon>luggage</mat-icon> Minhas compras
+      </a>
+    </section>
+
+    <section class="account-stats" aria-label="Resumo da conta">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <span class="stat-icon"><mat-icon>receipt_long</mat-icon></span>
+          <div><p>Total de compras</p><strong>{{ purchasesLoading ? '—' : purchases.length }}</strong></div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <span class="stat-icon"><mat-icon>check_circle</mat-icon></span>
+          <div><p>Compras confirmadas</p><strong>{{ purchasesLoading ? '—' : confirmedPurchases.length }}</strong></div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <span class="stat-icon"><mat-icon>payments</mat-icon></span>
+          <div><p>Total confirmado</p><strong>{{ purchasesLoading ? '—' : (confirmedTotal | currency:'BRL') }}</strong></div>
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <div class="profile-columns">
+      <mat-card class="activity-card">
+        <mat-card-content>
+          <div class="section-title">
+            <div><p class="eyebrow">Sua atividade</p><h2>Viagens recentes</h2></div>
+            <a mat-button routerLink="/minhas-compras">Ver todas</a>
+          </div>
+          <div *ngIf="purchasesLoading" class="inline-loading">
+            <mat-spinner diameter="32"></mat-spinner>
+            <span>Carregando suas compras...</span>
+          </div>
+          <p *ngIf="purchasesError" class="error-message" role="alert">{{ purchasesError }}</p>
+          <div *ngIf="!purchasesLoading && !purchasesError && !purchases.length" class="empty-purchases">
+            <mat-icon>travel_explore</mat-icon>
+            <h3>Sua próxima viagem começa aqui</h3>
+            <p>Quando você fizer uma compra, ela aparecerá neste resumo.</p>
+            <a mat-flat-button color="primary" routerLink="/pacotes">Explorar pacotes</a>
+          </div>
+          <article class="recent-purchase" *ngFor="let purchase of recentPurchases">
+            <span class="trip-icon"><mat-icon>{{ purchase.tipoCompra === 'voo' ? 'flight' : 'map' }}</mat-icon></span>
+            <div class="trip-copy">
+              <strong>{{ purchase.pacote || ('Voo ' + purchase.origemVoo + ' → ' + purchase.destinoVoo) }}</strong>
+              <span>{{ purchase.cidade || purchase.destinoVoo || 'Destino não informado' }} · {{ formatDate(purchase.dataIda) }}</span>
+              <span class="trip-voucher">Voucher {{ purchase.codigo }}</span>
+            </div>
+            <div class="trip-price">
+              <strong>{{ purchase.total | currency:'BRL' }}</strong>
+              <span [class.cancelled]="purchase.status === 'Cancelada'">{{ purchase.status }}</span>
+            </div>
+          </article>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="profile-card">
+        <mat-card-content>
+          <div class="section-title">
+            <div><p class="eyebrow">Dados da conta</p><h2>Informações pessoais</h2></div>
+            <mat-icon class="section-icon">manage_accounts</mat-icon>
+          </div>
+          <div class="account-details">
+            <p><mat-icon>mail</mat-icon><span><small>E-mail da conta</small><strong>{{ profile.email }}</strong></span></p>
+            <p><mat-icon>calendar_today</mat-icon><span><small>Membro desde</small><strong>{{ formatDate(profile.dataCadastro) }}</strong></span></p>
+          </div>
+          <mat-divider></mat-divider>
+          <h3>Editar contato</h3>
+          <form (ngSubmit)="save()">
+            <mat-form-field appearance="outline">
+              <mat-label>Nome completo</mat-label>
+              <input matInput name="nome" [(ngModel)]="nome" maxlength="100" autocomplete="name" required>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Telefone</mat-label>
+              <input matInput type="tel" name="telefone" [(ngModel)]="telefone" maxlength="20" autocomplete="tel">
+            </mat-form-field>
+            <p class="email-note">O e-mail é usado para entrar e não pode ser alterado aqui.</p>
+            <p *ngIf="successMessage" class="success-message" role="status">{{ successMessage }}</p>
+            <p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+            <button mat-flat-button color="primary" type="submit" [disabled]="saving || !nome.trim()">
+              {{ saving ? 'Salvando...' : 'Salvar alterações' }}
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+</section>

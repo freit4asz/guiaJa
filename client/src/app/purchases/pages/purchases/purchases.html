@@ -1,0 +1,66 @@
+<section class="page-heading">
+  <p class="eyebrow">Sua área de viagens</p>
+  <h1>Minhas compras</h1>
+  <p>Consulte seus vouchers, datas, guias e roteiros. Você pode alterar a data ou cancelar uma compra de pacote.</p>
+</section>
+<p *ngIf="successMessage" class="success-message" role="status">{{ successMessage }}</p>
+<p *ngIf="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+<div *ngIf="loading" class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+
+<mat-card *ngIf="confirmedPurchase as purchase" class="purchase-confirmation" role="status">
+  <mat-card-content>
+    <mat-icon aria-hidden="true">check_circle</mat-icon>
+    <div>
+      <p class="eyebrow">Compra confirmada</p>
+      <h2>{{ purchaseTitle(purchase) }}</h2>
+      <p>Sua compra foi registrada com sucesso. Guarde o voucher para consultar os detalhes.</p>
+      <strong>Voucher: {{ purchase.codigo }}</strong>
+    </div>
+    <strong class="confirmation-total">{{ purchase.total | currency:'BRL' }}</strong>
+  </mat-card-content>
+</mat-card>
+
+<section class="purchase-list" *ngIf="!loading">
+  <mat-card *ngFor="let item of purchases" [class.new-purchase]="item.id === highlightedId">
+    <mat-card-content>
+      <div class="purchase-heading">
+        <div>
+          <p class="eyebrow">
+            {{ item.tipoCompra === 'voo' ? 'Passagem aérea' : item.tipoCompra === 'hotel' ? 'Hospedagem avulsa' : 'Pacote de viagem' }}
+          </p>
+          <h2>{{ purchaseTitle(item) }}</h2>
+        </div>
+        <span class="status" [class.cancelled]="item.status === 'Cancelada'">{{ item.status }}</span>
+      </div>
+      <div class="purchase-details">
+        <p><strong>Voucher:</strong> {{ item.codigo }}</p>
+        <p><strong>Comprado em:</strong> {{ purchaseDateTime(item.dataHoraCompra) }}</p>
+        <p><strong>Destino:</strong> {{ item.cidade || item.destinoVoo }}<span *ngIf="item.estado">, {{ item.estado }}</span></p>
+        <p><strong>Valor pago:</strong> {{ item.total | currency:'BRL' }}</p>
+        <p *ngIf="item.valorDesconto"><strong>Desconto aplicado:</strong> {{ item.valorDesconto | currency:'BRL' }}</p>
+        <p *ngIf="item.guia"><strong>Guia:</strong> {{ item.guia }} · {{ item.cidadeGuia }}</p>
+        <p *ngIf="item.hospedagem"><strong>Hospedagem:</strong> {{ item.hospedagem }}</p>
+      </div>
+      <section *ngIf="item.guia && item.roteiro.length" class="itinerary">
+        <h3>Roteiro personalizado com seu guia</h3>
+        <ol><li *ngFor="let stop of item.roteiro">{{ stop }}</li></ol>
+      </section>
+      <div class="purchase-actions" *ngIf="item.status !== 'Cancelada'">
+        <mat-form-field appearance="outline">
+          <mat-label>Data da viagem</mat-label>
+          <input matInput type="date" [min]="minDate" [(ngModel)]="dateEdits[item.id]" [disabled]="item.tipoCompra === 'voo'">
+        </mat-form-field>
+        <button mat-stroked-button type="button" (click)="updateDate(item)" [disabled]="item.tipoCompra === 'voo'">Salvar data</button>
+        <button mat-button color="warn" type="button" (click)="cancel(item)">Cancelar compra</button>
+      </div>
+      <p *ngIf="item.tipoCompra === 'voo'" class="hint">A data de um voo depende da passagem; para mudar, cancele e compre outro voo.</p>
+    </mat-card-content>
+  </mat-card>
+  <mat-card *ngIf="!purchases.length">
+    <mat-card-content>
+      <h2>Você ainda não fez compras</h2>
+      <p>Explore pacotes e voos para planejar sua próxima viagem.</p>
+      <a mat-flat-button color="primary" routerLink="/pacotes">Ver pacotes</a>
+    </mat-card-content>
+  </mat-card>
+</section>
