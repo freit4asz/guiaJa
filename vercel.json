@@ -3,7 +3,7 @@
   "installCommand": "npm ci && npm --prefix client ci",
   "buildCommand": "npm run vercel-build",
   "functions": {
-    "server.js": {
+    "app.js": {
       "includeFiles": "client/dist/client/browser/**"
     }
   }

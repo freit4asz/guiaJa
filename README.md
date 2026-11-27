@@ -28,7 +28,7 @@ Para desenvolver o front com recarga automática, mantenha o backend ativo (`nod
 O projeto pode ser importado na Vercel pela raiz do repositório. O `vercel.json` instala as dependências do servidor e do Angular, compila a interface para os arquivos públicos e inclui o build Angular usado pelo fallback de rotas do Express. A API e o site usam o mesmo domínio.
 
 1. Hospede o MySQL em um serviço externo que aceite conexões da Vercel. Importe [`banco/guiaja_banco.sql`](./banco/guiaja_banco.sql) em um banco novo ou aplique as migrações indicadas acima em um banco existente.
-2. Na Vercel, importe o repositório `freit4asz/guiaJa`, mantendo a raiz do projeto como diretório raiz.
+2. Na Vercel, importe o repositório `freit4asz/guiaJa`, mantendo a raiz do projeto como diretório raiz. Use um deployment de **Production** para o site público; previews podem exigir autenticação pela proteção de deployments da Vercel.
 3. Em **Settings > Environment Variables**, configure `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` e `MYSQL_SSL`. Use `MYSQL_SSL=true` se o provedor exigir TLS. Cadastre segredos somente no painel da Vercel; nunca os coloque no Git.
 4. Faça o deploy de produção e teste o site e uma rota `/api`. Sem MySQL remoto e essas variáveis, as páginas podem abrir, mas as operações de dados falharão.
 

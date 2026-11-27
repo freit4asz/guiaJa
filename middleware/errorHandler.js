@@ -1,9 +1,12 @@
 const DomainError = require('../errors/DomainError');
 
 const databaseMessages = {
-  ER_ACCESS_DENIED_ERROR: 'Acesso ao MySQL negado. Confira MYSQL_PASSWORD no arquivo .env.',
-  ER_BAD_DB_ERROR: 'O banco guiaja não existe. Importe banco/guiaja_banco.sql.',
-  ECONNREFUSED: 'Não foi possível conectar ao MySQL. Confira se o serviço está iniciado.'
+  ER_ACCESS_DENIED_ERROR: 'Acesso ao MySQL negado. Confira MYSQL_USER e MYSQL_PASSWORD nas variáveis de ambiente.',
+  ER_BAD_DB_ERROR: 'O banco configurado não existe. Confira MYSQL_DATABASE e importe banco/guiaja_banco.sql.',
+  ECONNREFUSED: 'Conexão MySQL recusada. Confira MYSQL_HOST, MYSQL_PORT e se o provedor aceita conexões externas.',
+  ETIMEDOUT: 'Tempo esgotado ao conectar ao MySQL. Confira MYSQL_HOST, MYSQL_PORT e as regras de rede do provedor.',
+  ENOTFOUND: 'Servidor MySQL não encontrado. Confira o valor de MYSQL_HOST.',
+  ECONNRESET: 'Conexão com MySQL interrompida. Confira a disponibilidade do banco e as configurações de rede.'
 };
 
 module.exports = (error, req, res, next) => {

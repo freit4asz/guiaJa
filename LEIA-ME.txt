@@ -21,6 +21,7 @@ PUBLICAÇÃO NA VERCEL
   2. Importe banco/guiaja_banco.sql em um banco novo ou aplique as
      migracoes indicadas no README.md em um banco existente.
   3. Importe este repositorio na Vercel com a raiz do projeto como diretorio.
+     Use Production para o site publico; previews podem exigir login.
   4. Em Settings > Environment Variables, configure MYSQL_HOST,
      MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE e MYSQL_SSL.
      Use MYSQL_SSL=true se o provedor exigir TLS. Nunca publique senhas no Git.
