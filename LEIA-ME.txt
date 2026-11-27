@@ -17,11 +17,22 @@ PASSO 4 - Abra no navegador:  http://localhost:3000
   (para parar o servidor: Ctrl + C no terminal)
 
 PUBLICAÇÃO NA VERCEL
-  1. Hospede o MySQL em um serviço externo que permita conexao remota.
-  2. Execute banco/guiaja_banco.sql nesse banco externo.
-  3. Na Vercel, em Settings > Environment Variables, configure:
-     MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD,
-     MYSQL_DATABASE e MYSQL_SSL.
-  4. Faça o deploy a partir da raiz do projeto. O vercel.json enviado
-     serve public/ como site e server.js como API em /api.
-  Observação: localhost no projeto local não existe no servidor da Vercel.
+  1. Hospede o MySQL em um serviço externo que aceite conexoes da Vercel.
+  2. Importe banco/guiaja_banco.sql em um banco novo ou aplique as
+     migracoes indicadas no README.md em um banco existente.
+  3. Importe este repositorio na Vercel com a raiz do projeto como diretorio.
+  4. Em Settings > Environment Variables, configure MYSQL_HOST,
+     MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE e MYSQL_SSL.
+     Use MYSQL_SSL=true se o provedor exigir TLS. Nunca publique senhas no Git.
+  5. Faca o deploy e teste o site e uma rota /api.
+
+  O build da Vercel instala as dependencias do servidor e do Angular,
+  compila a interface e publica site e API no mesmo dominio. Sem MySQL
+  remoto e as variaveis acima, as paginas podem abrir, mas as operacoes
+  de dados falharao.
+
+  O worker de e-mail atual depende de um processo Node.js continuo e nao
+  e iniciado pelas funcoes serverless da Vercel. Para enviar notificacoes,
+  hospede o worker em um servico com processo continuo ou configure um
+  agendador compativel. Cadastre segredos SMTP como variaveis de ambiente,
+  nunca no repositorio.

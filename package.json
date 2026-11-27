@@ -5,6 +5,7 @@
   "scripts": {
     "start": "npm run build:client && node server.js",
     "build:client": "npm --prefix client run build",
+    "vercel-build": "npm run build:client && node scripts/prepare-vercel.js",
     "test": "node --test"
   },
   "dependencies": {

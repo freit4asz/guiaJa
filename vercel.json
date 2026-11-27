@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci && npm --prefix client ci",
+  "buildCommand": "npm run vercel-build",
+  "functions": {
+    "server.js": {
+      "includeFiles": "client/dist/client/browser/**"
+    }
+  }
+}

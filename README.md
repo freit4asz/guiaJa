@@ -23,6 +23,17 @@ Preencher com os dados oficiais do grupo antes da entrega:
 
 Para desenvolver o front com recarga automática, mantenha o backend ativo (`node server.js`) e, em outro terminal, execute `npm --prefix client start`; a aplicação Angular estará em `http://localhost:4200` e o proxy encaminhará `/api` ao backend local.
 
+## Publicar na Vercel
+
+O projeto pode ser importado na Vercel pela raiz do repositório. O `vercel.json` instala as dependências do servidor e do Angular, compila a interface para os arquivos públicos e inclui o build Angular usado pelo fallback de rotas do Express. A API e o site usam o mesmo domínio.
+
+1. Hospede o MySQL em um serviço externo que aceite conexões da Vercel. Importe [`banco/guiaja_banco.sql`](./banco/guiaja_banco.sql) em um banco novo ou aplique as migrações indicadas acima em um banco existente.
+2. Na Vercel, importe o repositório `freit4asz/guiaJa`, mantendo a raiz do projeto como diretório raiz.
+3. Em **Settings > Environment Variables**, configure `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` e `MYSQL_SSL`. Use `MYSQL_SSL=true` se o provedor exigir TLS. Cadastre segredos somente no painel da Vercel; nunca os coloque no Git.
+4. Faça o deploy de produção e teste o site e uma rota `/api`. Sem MySQL remoto e essas variáveis, as páginas podem abrir, mas as operações de dados falharão.
+
+O worker de e-mail atual depende de um processo Node.js contínuo e não é iniciado pelas funções serverless da Vercel. Portanto, as notificações gravadas em `email_outbox` não serão enviadas automaticamente nesse ambiente. Para ativar esse envio, hospede o worker em um serviço com processo contínuo ou configure um agendador compatível; as credenciais SMTP devem ser cadastradas como variáveis de ambiente na plataforma que executará o worker.
+
 ## Aplicação Angular
 
 A interface principal está em `client/` e usa Angular com `NgModules` (`standalone: false`), roteamento e Angular Material. O build é client-side, sem SSR/SSG. A navegação disponibiliza pacotes, voos avulsos, hospedagens, guias, cadastro/login e compras. É possível reservar hotel avulso, sem pacote, escolhendo check-in e número de noites. Usuários autenticados podem enviar mensagens aos guias; os avisos por e-mail dependem da configuração SMTP. Após qualquer compra, a tela de compras exibe a confirmação e o voucher. Reservas exigem autenticação e os valores são recalculados pelo servidor.
