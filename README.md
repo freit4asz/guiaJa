@@ -16,7 +16,7 @@ Preencher com os dados oficiais do grupo antes da entrega:
 
 1. Use Node.js 20.19 ou superior e MySQL 5.7/8.
 2. Para um banco novo, importe [`banco/guiaja_banco.sql`](./banco/guiaja_banco.sql) no MySQL Workbench. **Esse script remove e recria o banco `guiaja`.** Se já tem dados, não rode esse script: execute as migrações incrementais `001_acessos_historico.sql`, `002_email_notifications.sql`, `003_randomize_guide_destinations.sql`, `004_package_discount.sql`, `005_flight_city_options.sql` e `006_reservation_purchase_time.sql`, cada uma uma única vez.
-3. Copie `.env.example` para `.env` e informe a conexão. Não publique o `.env`.
+3. Copie `.env.example` para `.env` e informe a conexão. Para usar um banco externo, substitua `MYSQL_HOST=localhost` pelo host do provedor e configure porta, usuário, senha, nome do banco e SSL conforme os dados fornecidos por ele. `localhost` aponta para a própria máquina onde o site está rodando, não para o banco remoto. Não publique o `.env`.
 4. Execute `npm install` na raiz e `npm install --prefix client` para instalar as dependências do Angular.
 5. Execute `npm test` e `npm start`. O comando inicial compila o front Angular e serve a aplicação em `http://localhost:3000`.
 6. Acesse <http://localhost:3000>.
@@ -25,11 +25,11 @@ Para desenvolver o front com recarga automática, mantenha o backend ativo (`nod
 
 ## Publicar na Vercel
 
-O projeto pode ser importado na Vercel pela raiz do repositório. O `vercel.json` instala as dependências do servidor e do Angular, compila a interface para os arquivos públicos e inclui o build Angular usado pelo fallback de rotas do Express. A API e o site usam o mesmo domínio.
+O projeto pode ser importado na Vercel pela raiz do repositório. A plataforma detecta o Express exportado por `app.js`; o `vercel.json` instala as dependências do servidor e do Angular e compila a interface para `public/`, de onde os arquivos estáticos são servidos pela Vercel CDN. A API e o site usam o mesmo domínio.
 
 1. Hospede o MySQL em um serviço externo que aceite conexões da Vercel. Importe [`banco/guiaja_banco.sql`](./banco/guiaja_banco.sql) em um banco novo ou aplique as migrações indicadas acima em um banco existente.
 2. Na Vercel, importe o repositório `freit4asz/guiaJa`, mantendo a raiz do projeto como diretório raiz. Use um deployment de **Production** para o site público; previews podem exigir autenticação pela proteção de deployments da Vercel.
-3. Em **Settings > Environment Variables**, configure `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` e `MYSQL_SSL`. Use `MYSQL_SSL=true` se o provedor exigir TLS. Cadastre segredos somente no painel da Vercel; nunca os coloque no Git.
+3. Em **Settings > Environment Variables**, configure `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` e `MYSQL_SSL` usando os dados do provedor. `MYSQL_HOST` deve ser o host remoto do banco, nunca `localhost`; `localhost` na Vercel aponta para a própria função, não para seu banco. Use `MYSQL_SSL=true` se o provedor exigir TLS. Cadastre segredos somente no painel da Vercel; nunca os coloque no Git.
 4. Faça o deploy de produção e teste o site e uma rota `/api`. Sem MySQL remoto e essas variáveis, as páginas podem abrir, mas as operações de dados falharão.
 
 O worker de e-mail atual depende de um processo Node.js contínuo e não é iniciado pelas funções serverless da Vercel. Portanto, as notificações gravadas em `email_outbox` não serão enviadas automaticamente nesse ambiente. Para ativar esse envio, hospede o worker em um serviço com processo contínuo ou configure um agendador compatível; as credenciais SMTP devem ser cadastradas como variáveis de ambiente na plataforma que executará o worker.
