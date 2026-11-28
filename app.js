@@ -9,10 +9,15 @@ const app = express();
 app.use(express.json({limit: '1mb'}));
 app.use(accessTracker);
 const angularBuild = path.join(__dirname, 'client', 'dist', 'client', 'browser');
-if (!process.env.VERCEL) {
-  app.use(express.static(angularBuild));
-  app.use(express.static(path.join(__dirname, 'public')));
-}
+const staticOptions = {
+  setHeaders(res, filePath) {
+    if (path.extname(filePath) === '.bundle') {
+      res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+    }
+  }
+};
+app.use(express.static(angularBuild, staticOptions));
+app.use(express.static(path.join(__dirname, 'public'), staticOptions));
 app.use('/api', apiRoutes);
 app.get(/^\/api(?:\/|$)/, (req, res) => res.status(404).json({erro: 'Rota não encontrada.'}));
 app.get('*', (req, res, next) => {
