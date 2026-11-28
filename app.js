@@ -9,8 +9,10 @@ const app = express();
 app.use(express.json({limit: '1mb'}));
 app.use(accessTracker);
 const angularBuild = path.join(__dirname, 'client', 'dist', 'client', 'browser');
-app.use(express.static(angularBuild));
-app.use(express.static(path.join(__dirname, 'public')));
+if (!process.env.VERCEL) {
+  app.use(express.static(angularBuild));
+  app.use(express.static(path.join(__dirname, 'public')));
+}
 app.use('/api', apiRoutes);
 app.get(/^\/api(?:\/|$)/, (req, res) => res.status(404).json({erro: 'Rota não encontrada.'}));
 app.get('*', (req, res, next) => {
